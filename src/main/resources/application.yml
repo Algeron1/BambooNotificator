@@ -1,0 +1,10 @@
+bamboo:
+  deploymentIds:
+    146702410: "TST01 Billing Center"
+    146702411: "TST02 Billing Center"
+    136446236: "TST01 Billing Center"
+    136446242: "TST01 Policy Center"
+    146702424: "TST06 Policy Center"
+    146702413: "TST06 Billing Center"
+    136446144: "TST04 Billing Center"
+    136446146: "TST04 Policy Center"
