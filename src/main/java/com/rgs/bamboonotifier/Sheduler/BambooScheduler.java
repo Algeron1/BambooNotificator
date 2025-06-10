@@ -1,6 +1,8 @@
 package com.rgs.bamboonotifier.Sheduler;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
+import com.rgs.bamboonotifier.Entity.DeployMessage;
+import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.config.BambooProperties;
 import com.rgs.bamboonotifier.sender.MessageSender;
 import com.rgs.bamboonotifier.service.BambooService;
@@ -19,39 +21,47 @@ public class BambooScheduler {
     private final BambooService bambooService;
     private final BambooProperties bambooProperties;
     private final MessageSender messageSender;
+    private final DeployMessageRepository deployMessageRepository;
 
-
-    private final Map<String, DeployResult> lastDeploys = new HashMap<>();
-
-    public BambooScheduler(BambooService bambooService, MessageSender sender, BambooProperties bambooProperties) {
+    public BambooScheduler(BambooService bambooService, MessageSender sender, BambooProperties bambooProperties, DeployMessageRepository deployMessageRepository) {
         this.bambooService = bambooService;
         this.messageSender = sender;
         this.bambooProperties = bambooProperties;
+        this.deployMessageRepository = deployMessageRepository;
     }
 
     @Scheduled(fixedRate = 30000)
     public void checkDeploymentStatuses() {
         for (Map.Entry<String, String> entry : bambooProperties.getDeploymentIds().entrySet()) {
-            String deploymentId = entry.getKey();
+
+            String environmentId = entry.getKey();
             String standName = entry.getValue();
 
             try {
-                DeployResult status = bambooService.getDeploymentStatus(deploymentId);
+                DeployResult status = bambooService.getDeploymentStatus(environmentId);
                 if (status == null) {
                     logger.warn("Не удалось получить статус для стенда {}", standName);
                     continue;
                 }
 
-                DeployResult lastDeploy = lastDeploys.get(deploymentId);
+                DeployMessage lastMessage = getDeployMessage(environmentId);
+                DeployResult lastDeploy = null;
 
-                if (lastDeploy == null || !lastDeploy.equals(status)) {
-                    messageSender.sendMessage(status, standName);
+                if(lastMessage != null && lastMessage.getEnvironmentId() != null) {
+                    lastDeploy = getDeployMessage(environmentId).getDeployResult();
+                }
+                if (lastDeploy == null || !(lastDeploy.getDeploymentState().equalsIgnoreCase(status.getDeploymentState())
+                        && lastDeploy.getId() == status.getId())) {
+                    messageSender.sendMessage(status, standName, environmentId);
                     logger.info("Отправлено уведомление по стенду {}", standName);
-                    lastDeploys.put(deploymentId, status);
                 }
             } catch (Exception e) {
                 logger.error("Ошибка при проверке стенда {}: {}", standName, e.getMessage());
             }
         }
+    }
+
+    public DeployMessage getDeployMessage(String environmentId) {
+        return deployMessageRepository.findByEnvironmentId(environmentId);
     }
 }
