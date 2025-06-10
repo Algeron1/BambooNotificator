@@ -1,9 +1,9 @@
 package com.rgs.bamboonotifier.interfaces;
 
-import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
 
-public interface ImessageSender {
+public interface ImessageSender<T> {
 
-    void sendMessage(String message);
+    ResponseEntity<T> sendMessage(String message, String messageId);
 
 }
