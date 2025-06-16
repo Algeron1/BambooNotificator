@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface DeployMessageRepository extends CrudRepository<DeployMessage, String> {
 
     DeployMessage findByEnvironmentId(String envorinmentId);
+
+    DeployMessage findByDeployId(Long deployId);
 }

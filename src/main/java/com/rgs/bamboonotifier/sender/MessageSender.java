@@ -6,6 +6,7 @@ import com.rgs.bamboonotifier.DTO.TelegramResponse;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.constants.ApplicationConstants;
+import com.rgs.bamboonotifier.interfaces.ImessageSender;
 import com.rgs.bamboonotifier.service.PachkaService;
 import com.rgs.bamboonotifier.service.TelegramService;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,9 +37,9 @@ public class MessageSender {
 
     public void sendMessage(DeployResult deployResult, String standName, String environmentId) {
         String message = formatMessage(deployResult, standName);
-        DeployMessage deployMessage = getDeployMessage(environmentId);
+        DeployMessage deployMessage = getDeployMessage(deployResult.getDeploymentVersion().getId());
 
-        if (deployMessage == null || deployMessage.getDeployResult() != deployResult) {
+        if (deployMessage == null) {
             deployMessage = new DeployMessage();
         }
 
@@ -48,7 +49,7 @@ public class MessageSender {
 
         if (telegramEnabled) {
             ResponseEntity<TelegramResponse> response;
-            if (deployMessage.getTelegramMessageId() != null && deployResult.getDeploymentVersion().getId() == deployMessage.getDeployId()) {
+            if (deployMessage.getTelegramMessageId() != null && deployResult.getId() == deployMessage.getDeployResult().getId()) {
                 response = telegramService.sendMessage(message, deployMessage.getTelegramMessageId());
             } else {
                 response = telegramService.sendMessage(message, null);
@@ -58,7 +59,7 @@ public class MessageSender {
         }
         if (pachkaEnabled) {
             ResponseEntity<PachkaResponse> response;
-            if (deployMessage.getPachkaMessageId() != null && deployResult.getDeploymentVersion().getId() == deployMessage.getDeployId()) {
+            if (deployMessage.getPachkaMessageId() != null && deployResult.getId() == deployMessage.getDeployResult().getId()) {
                 response = pachkaService.sendMessage(message, deployMessage.getPachkaMessageId());
             } else {
                 response = pachkaService.sendMessage(message, null);
@@ -73,17 +74,17 @@ public class MessageSender {
         deployMessageRepository.save(message);
     }
 
-    public DeployMessage getDeployMessage(String deployId) {
-        return deployMessageRepository.findById(deployId).orElse(null);
+    public DeployMessage getDeployMessage(Long deployId) {
+        return deployMessageRepository.findByDeployId(deployId);
     }
 
     private String formatMessage(DeployResult deployResult, String standName) {
-        return String.format(ApplicationConstants.NEW_DEPLOY_MESSAGE_TEMPLATE,
+        return String.format(getTemplate(deployResult),
                 standName,
                 deployResult.getDeploymentVersion().getName(),
-                formatDate(deployResult.getStartedDate()),
-                formatDate(deployResult.getFinishedDate()),
-                deployResult.getDeploymentVersion().getCreatorDisplayName(),
+                deployResult.getStartedDate() == null ? null : formatDate(deployResult.getStartedDate()),
+                deployResult.getFinishedDate() == null ? null : formatDate(deployResult.getFinishedDate()),
+                deployResult.getDeploymentVersion().getCreatorDisplayName() == null ? "Автодеплой" : deployResult.getDeploymentVersion().getCreatorDisplayName(),
                 deployResult.getDeploymentVersion().getPlanBranchName(),
                 deployResult.getDeploymentState(),
                 deployResult.getLifeCycleState()
@@ -92,5 +93,16 @@ public class MessageSender {
 
     private String formatDate(Date date) {
         return new SimpleDateFormat("dd.MM.yyyy HH:mm").format(date);
+    }
+
+    private String getTemplate(DeployResult result) {
+        if (result.getDeploymentState().equalsIgnoreCase(ApplicationConstants.SUCCESS_STATUS)) {
+            return ApplicationConstants.SUCCESS_DEPLOY_MESSAGE_TEMPLATE;
+        }
+        if (result.getLifeCycleState().equalsIgnoreCase(ApplicationConstants.IN_PROGRESS_STATUS)
+                && result.getDeploymentState().equalsIgnoreCase(ApplicationConstants.UNKNOWN_STATUS)) {
+            return ApplicationConstants.NEW_DEPLOY_MESSAGE_TEMPLATE;
+        }
+        return ApplicationConstants.ERROR_DEPLOY_MESSAGE_TEMPLATE;
     }
 }

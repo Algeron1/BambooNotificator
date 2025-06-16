@@ -44,11 +44,11 @@ public class BambooScheduler {
                     continue;
                 }
 
-                DeployMessage lastMessage = getDeployMessage(environmentId);
+                DeployMessage lastMessage = getDeployMessage(status.getDeploymentVersion().getId());
                 DeployResult lastDeploy = null;
 
-                if(lastMessage != null && lastMessage.getEnvironmentId() != null) {
-                    lastDeploy = getDeployMessage(environmentId).getDeployResult();
+                if (lastMessage != null && lastMessage.getDeployResult() != null) {
+                    lastDeploy = lastMessage.getDeployResult();
                 }
                 if (lastDeploy == null || !(lastDeploy.getDeploymentState().equalsIgnoreCase(status.getDeploymentState())
                         && lastDeploy.getId() == status.getId())) {
@@ -61,7 +61,7 @@ public class BambooScheduler {
         }
     }
 
-    public DeployMessage getDeployMessage(String environmentId) {
-        return deployMessageRepository.findByEnvironmentId(environmentId);
+    public DeployMessage getDeployMessage(Long deploymentId) {
+        return deployMessageRepository.findByDeployId(deploymentId);
     }
 }

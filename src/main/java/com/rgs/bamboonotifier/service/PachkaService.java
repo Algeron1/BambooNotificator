@@ -27,7 +27,7 @@ public class PachkaService implements ImessageSender<PachkaResponse> {
     private String pachkaApiToken;
 
     @Value("${pachka.api.entity_id}")
-    private String entity_id;
+    private String entityId;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -51,8 +51,12 @@ public class PachkaService implements ImessageSender<PachkaResponse> {
     private HttpEntity buildRequest(String content, String messageId) {
         Map<String, Object> message = new HashMap<>();
         message.put("entity_type", "discussion");
-        message.put("entity_id", entity_id);
+        message.put("entity_id", entityId);
         message.put("content", content);
+
+        if (messageId != null && !messageId.isEmpty()) {
+            message.put("parent_message_id", Integer.parseInt(messageId));
+        }
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("message", message);
