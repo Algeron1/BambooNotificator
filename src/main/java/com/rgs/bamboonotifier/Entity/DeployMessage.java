@@ -6,8 +6,9 @@ import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.index.Indexed;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
-@RedisHash("DeployMessage")
+@RedisHash(value = "DeployMessage", timeToLive = 7 * 24 * 60 * 60)
 public class DeployMessage implements Serializable {
 
     @Id
@@ -17,6 +18,7 @@ public class DeployMessage implements Serializable {
     private String message;
     private String author;
     private DeployResult deployResult;
+    private LocalDateTime createdAt;
 
     @Indexed
     private String environmentId;
@@ -88,6 +90,14 @@ public class DeployMessage implements Serializable {
 
     public void setTelegramMessageId(String telegramMessageId) {
         this.telegramMessageId = telegramMessageId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
 }

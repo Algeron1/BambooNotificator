@@ -1,12 +1,15 @@
 package com.rgs.bamboonotifier.sender;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
+import com.rgs.bamboonotifier.Entity.DeployBan;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.constants.ApplicationConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public abstract class AbstractMessageSender<T> {
@@ -15,6 +18,8 @@ public abstract class AbstractMessageSender<T> {
     protected DeployMessageRepository deployMessageRepository;
 
     public abstract void send(DeployResult deployResult, String standName, String environmentId, DeployMessage deployMessage);
+
+    public abstract void sendDeployBanMessage(DeployBan deployBan);
 
     protected String formatMessage(DeployResult deployResult, String standName) {
         return String.format(getTemplate(deployResult),
@@ -27,6 +32,20 @@ public abstract class AbstractMessageSender<T> {
                 deployResult.getDeploymentState(),
                 deployResult.getLifeCycleState()
         );
+    }
+
+    protected String formatDeployBanMessage(DeployBan deployBan) {
+        return String.format(ApplicationConstants.DEPLOY_BAN_MESSAGE_TEMPLATE,
+        deployBan.getStandName(),
+        deployBan.getReason(),
+        formatDate(deployBan.getFrom()),
+        formatDate(deployBan.getTo()),
+        deployBan.getAuthor()
+        );
+    }
+
+    protected String formatDate(LocalDateTime date) {
+        return date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
     }
 
     protected String formatDate(Date date) {

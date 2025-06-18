@@ -9,14 +9,17 @@
             color: #198754;
             font-weight: bold;
         }
+
         .status-error {
             color: #dc3545;
             font-weight: bold;
         }
+
         .status-in-progress {
             color: #ffc107;
             font-weight: bold;
         }
+
         .status-unknown {
             color: #6c757d;
             font-weight: bold;
@@ -25,6 +28,7 @@
         .bg-success-custom {
             background-color: #d1e7dd !important;
         }
+
         .bg-unknown-custom {
             background-color: #dee2e6 !important;
         }
@@ -40,14 +44,74 @@
     <h5 class="mb-0">Автообновление каждые 30 секунд</h5>
 
     <div id="deploymentsList" class="gy-3"></div>
+    <div class="container">
+        <!-- Футер с контактами -->
+        <footer class="mt-5 pt-4 pb-2 border-top text-center text-muted">
+            <p class="mb-1">По всем вопросам обращайтесь к создателю:</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="https://t.me/el_eduardo" target="_blank" class="text-decoration-none">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
+                         alt="Telegram" width="24" height="24"> Telegram
+                </a>
+                <a href="https://vk.com/id13450731" target="_blank" class="text-decoration-none">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/VK.com-logo.svg"
+                         alt="VK" width="24" height="24"> ВКонтакте
+                </a>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- Модалка для добавления бана -->
+<div class="modal fade" id="banModal" tabindex="-1" aria-labelledby="banModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить бан на деплой</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="banStandName">
+                <div class="mb-3">
+                    <label class="form-label">Причина</label>
+                    <select class="form-select" id="banReasonSelect" onchange="handleReasonChange()">
+                        <option value="">Выберите причину</option>
+                        <option value="Проведение демо">Проведение демо</option>
+                        <option value="Тестирование критичного бага">Тестирование критичного бага</option>
+                        <option value="Регресс">Регресс</option>
+                        <option value="Иное">Иное</option>
+                    </select>
+                    <input type="text" class="form-control mt-2 d-none" id="banReasonCustom"
+                           placeholder="Укажите свою причину">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Автор</label>
+                    <input type="text" class="form-control" id="banAuthor">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">С</label>
+                    <input type="datetime-local" class="form-control" id="banFrom">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">По</label>
+                    <input type="datetime-local" class="form-control" id="banTo">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveBan()">Сохранить</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     async function fetchDeployments() {
         const response = await fetch('/deployments');
-        const deployments = await response.json();
+        const data = await response.json();
+        const deployments = data.deployments;
+        const deployBans = data.deployBans;
 
-        // Группируем по стенду
         const grouped = {};
         deployments.forEach(deploy => {
             const [stand, system] = deploy.environmentId.split("_");
@@ -62,11 +126,24 @@
             const standBlock = document.createElement('div');
             standBlock.className = 'mb-5';
 
+            const ban = deployBans.find(b => b.standName === standName);
+            let banBlock = '';
+            if (ban) {
+                banBlock = `
+                    <div class="alert alert-danger mb-3">
+                        🚫 Деплой запрещён с ${new Date(ban.from).toLocaleString()} до ${new Date(ban.to).toLocaleString()}<br>
+                        <strong>${ban.reason}</strong> (автор: ${ban.author})<br>
+                        <button class="btn btn-sm btn-outline-light mt-2" onclick="removeBan('${standName}')">Снять бан</button>
+                    </div>
+                `;
+            }
+
             standBlock.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="mb-0">${standName}</h3>
-                    <button class="btn btn-primary" onclick="alert('Функционал в разработке')">Просьба не деплоить</button>
+                    <button class="btn btn-primary" onclick="openBanModal('${standName}')">Просьба не деплоить</button>
                 </div>
+                ${banBlock}
             `;
 
             deploys.forEach(deploy => {
@@ -83,7 +160,6 @@
 
                 const card = document.createElement('div');
                 card.className = `card shadow-sm mb-3 ${bgClass}`;
-
                 card.innerHTML = `
                     <div class="card-body">
                         <h5 class="card-title">${deploy.system}</h5>
@@ -99,6 +175,59 @@
             });
 
             container.appendChild(standBlock);
+        }
+    }
+
+    function openBanModal(standName) {
+        document.getElementById('banStandName').value = standName;
+        const modal = new bootstrap.Modal(document.getElementById('banModal'));
+        modal.show();
+    }
+
+    async function saveBan() {
+        const standName = document.getElementById('banStandName').value;
+        const reasonSelect = document.getElementById('banReasonSelect').value;
+        const customReason = document.getElementById('banReasonCustom').value;
+        const author = document.getElementById('banAuthor').value;
+        const from = document.getElementById('banFrom').value;
+        const to = document.getElementById('banTo').value;
+
+        // Формируем итоговую причину
+        const reason = reasonSelect === 'Иное' ? customReason : reasonSelect;
+
+        if (!reason || !author || !from || !to) {
+            alert("Заполните все обязательные поля!");
+            return;
+        }
+
+        await fetch('/deploy-ban', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ standName, reason, author, from, to })
+        });
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('banModal'));
+        modal.hide();
+        fetchDeployments();
+    }
+
+    async function removeBan(standName) {
+        if (!confirm(`Снять бан со стенда ${standName}?`)) return;
+
+        await fetch(`/deploy-ban/${standName}`, {method: 'DELETE'});
+        fetchDeployments();
+    }
+
+    function handleReasonChange() {
+        const select = document.getElementById('banReasonSelect');
+        const customInput = document.getElementById('banReasonCustom');
+
+        if (select.value === 'Иное') {
+            customInput.classList.remove('d-none');
+            customInput.focus();
+        } else {
+            customInput.classList.add('d-none');
+            customInput.value = '';
         }
     }
 

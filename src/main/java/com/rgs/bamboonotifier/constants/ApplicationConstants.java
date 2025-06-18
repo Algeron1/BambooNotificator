@@ -41,4 +41,13 @@ public class ApplicationConstants {
     📊 Конечный статус: %s
     📊 Статус деплоя: %s
     """;
+
+    public static final String DEPLOY_BAN_MESSAGE_TEMPLATE = """
+    <b>**Просьба не деплоить %s**</b>
+    
+    📦 Причина: %s
+    🕓 Время начала: %s
+    🕔 Время завершения: %s
+    👨‍💻 Автор: %s
+    """;
 }

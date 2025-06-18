@@ -1,9 +1,12 @@
 package com.rgs.bamboonotifier.sender;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
+import com.rgs.bamboonotifier.Entity.DeployBan;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class MessageSender {
@@ -24,6 +27,7 @@ public class MessageSender {
         DeployMessage deployMessage = deployMessageRepository.findByDeployId(deployResult.getDeploymentVersion().getId());
         if (deployMessage == null) {
             deployMessage = new DeployMessage();
+            deployMessage.setCreatedAt(LocalDateTime.now());
             deployMessage.setDeployId(deployResult.getDeploymentVersion().getId());
         }
         deployMessage.setEnvironmentId(environmentId);
@@ -31,5 +35,10 @@ public class MessageSender {
 
         telegramMessageSender.send(deployResult, standName, environmentId, deployMessage);
         pachkaMessageSender.send(deployResult, standName, environmentId, deployMessage);
+    }
+
+    public void sendDeployBanMessage(DeployBan deployBan) {
+        pachkaMessageSender.sendDeployBanMessage(deployBan);
+        telegramMessageSender.sendDeployBanMessage(deployBan);
     }
 }

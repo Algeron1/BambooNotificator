@@ -2,6 +2,7 @@ package com.rgs.bamboonotifier.sender;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
 import com.rgs.bamboonotifier.DTO.PachkaResponse;
+import com.rgs.bamboonotifier.Entity.DeployBan;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.interfaces.IMessageSender;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,5 +38,11 @@ public class PachkaMessageSender extends AbstractMessageSender {
         deployMessage.setPachkaMessageId(String.valueOf(pachkaResponse.getData().getId()));
 
         saveDeployMessage(deployMessage);
+    }
+
+    @Override
+    public void sendDeployBanMessage(DeployBan deployBan) {
+        if (!pachkaEnabled) return;
+        pachkaService.sendMessage(formatDeployBanMessage(deployBan), null);
     }
 }

@@ -11,4 +11,5 @@ public interface DeployMessageRepository extends CrudRepository<DeployMessage, S
 
     DeployMessage findByDeployId(Long deployId);
 
+    DeployMessage findFirstByEnvironmentIdOrderByCreatedAtDesc(String environmentId);
 }

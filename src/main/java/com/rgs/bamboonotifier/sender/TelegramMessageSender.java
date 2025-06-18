@@ -2,6 +2,7 @@ package com.rgs.bamboonotifier.sender;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
 import com.rgs.bamboonotifier.DTO.TelegramResponse;
+import com.rgs.bamboonotifier.Entity.DeployBan;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.interfaces.IMessageSender;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,5 +40,11 @@ public class TelegramMessageSender extends AbstractMessageSender {
         }
 
         saveDeployMessage(deployMessage);
+    }
+
+    @Override
+    public void sendDeployBanMessage(DeployBan deployBan) {
+        if (!telegramEnabled) return;
+        telegramService.sendMessage(formatDeployBanMessage(deployBan), null);
     }
 }
