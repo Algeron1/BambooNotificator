@@ -43,6 +43,7 @@ class FrontController {
                 deploymentInfo.setStartedDate(result.getStartedDate() == null ? null : formatDate(result.getStartedDate()));
                 deploymentInfo.setFinishedDate(result.getFinishedDate() == null ? null : formatDate(result.getFinishedDate()));
                 deploymentInfo.setAuthor(result.getDeploymentVersion().getCreatorDisplayName() == null ? "Автодеплой" : result.getDeploymentVersion().getCreatorDisplayName());
+                deploymentInfo.setBranchName(result.getDeploymentVersion().getPlanBranchName());
                 deployments.add(deploymentInfo);
             }
         }

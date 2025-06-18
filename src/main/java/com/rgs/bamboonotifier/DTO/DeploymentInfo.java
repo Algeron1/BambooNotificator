@@ -9,6 +9,15 @@ public class DeploymentInfo {
     private String startedDate;
     private String finishedDate;
     private String author;
+    private String branchName;
+
+    public String getBranchName() {
+        return branchName;
+    }
+
+    public void setBranchName(String branchName) {
+        this.branchName = branchName;
+    }
 
     public String getAuthor() {
         return author;

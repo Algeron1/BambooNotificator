@@ -1,15 +1,28 @@
+telegram:
+  api:
+    url: https://api.telegram.org/bot7719736579:AAFjww7AyCEEF_MgUzi6KoA0BXo7eBLsZ1c/sendMessage
+    chatId: -1002561756785
+
+pachka:
+  api:
+    url: https://api.pachca.com/api/shared/v1/messages/
+    token: RNu1qZsfy-dNLCyrOKB33p7vcSxdDb0FuLRn_eSVfxk
+    entity_id: 26092493
+
 bamboo:
   deploymentIds:
-    136446146: "TST04 Policy Center"
-    146702410: "TST01 Billing Center"
-    136446242: "TST01 Policy Center"
-    146702411: "TST02 Billing Center"
-    136446236: "TST01 Billing Center"
-    146702424: "TST06 Policy Center"
-    146702413: "TST06 Billing Center"
-    136446144: "TST04 Billing Center"
-    146702414: "TST09 Billing Center"
-    146702425: "TST09 Policy Center"
+
+    136446236: "TST01_Billing Center"
+    136446242: "TST01_Policy Center"
+
+    136446146: "TST04_Policy Center"
+    136446144: "TST04_Billing Center"
+
+    146702424: "TST06_Policy Center"
+    146702413: "TST06_Billing Center"
+
+    146702414: "TST09_Billing Center"
+    146702425: "TST09_Policy Center"
 
 
 spring:
