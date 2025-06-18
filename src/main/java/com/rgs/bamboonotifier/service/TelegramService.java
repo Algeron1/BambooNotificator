@@ -2,13 +2,13 @@
 package com.rgs.bamboonotifier.service;
 
 import com.rgs.bamboonotifier.DTO.TelegramResponse;
-import com.rgs.bamboonotifier.interfaces.ImessageSender;
+import com.rgs.bamboonotifier.config.TelegramProperties;
+import com.rgs.bamboonotifier.interfaces.IMessageSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,23 +17,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class TelegramService implements ImessageSender<TelegramResponse> {
+public class TelegramService implements IMessageSender<TelegramResponse> {
 
     private static final Logger logger = LoggerFactory.getLogger(TelegramService.class);
 
-    @Value("${telegram.api.url}")
-    private String telegramApiUrl;
-
-    @Value("${telegram.chat.id}")
-    private String chatId;
-
     private final RestTemplate restTemplate = new RestTemplate();
+    private final TelegramProperties telegramProperties;
+
+    public TelegramService(TelegramProperties telegramProperties) {
+        this.telegramProperties = telegramProperties;
+    }
 
     @Override
     public ResponseEntity<TelegramResponse> sendMessage(String message, String messageId) {
-        HttpEntity request = buildRequest(message, messageId);
+        HttpEntity<Map<String, Object>> request = buildRequest(message, messageId);
         try {
-            ResponseEntity<TelegramResponse> response = restTemplate.postForEntity(telegramApiUrl, request, TelegramResponse.class);
+            ResponseEntity<TelegramResponse> response = restTemplate.postForEntity(telegramProperties.getUrl(), request, TelegramResponse.class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 logger.info("Сообщение отправлено: {}", response.getBody());
             } else {
@@ -46,9 +45,9 @@ public class TelegramService implements ImessageSender<TelegramResponse> {
         }
     }
 
-    private HttpEntity buildRequest(String content, String messageId) {
-        Map<String, String> params = new HashMap<>();
-        params.put("chat_id", chatId);
+    private HttpEntity<Map<String, Object>> buildRequest(String content, String messageId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("chat_id", telegramProperties.getChatId());
         params.put("text", content);
         params.put("parse_mode", "HTML");
         if (messageId != null) {

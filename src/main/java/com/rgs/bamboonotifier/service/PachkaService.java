@@ -1,10 +1,10 @@
 package com.rgs.bamboonotifier.service;
 
 import com.rgs.bamboonotifier.DTO.PachkaResponse;
-import com.rgs.bamboonotifier.interfaces.ImessageSender;
+import com.rgs.bamboonotifier.config.PachkaProperties;
+import com.rgs.bamboonotifier.interfaces.IMessageSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,26 +16,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class PachkaService implements ImessageSender<PachkaResponse> {
+public class PachkaService implements IMessageSender<PachkaResponse> {
 
     private static final Logger logger = LoggerFactory.getLogger(PachkaService.class);
 
-    @Value("${pachka.api.url}")
-    private String pachkaApiUrl;
-
-    @Value("${pachka.api.token}")
-    private String pachkaApiToken;
-
-    @Value("${pachka.api.entity_id}")
-    private String entityId;
-
     private final RestTemplate restTemplate = new RestTemplate();
+    private final PachkaProperties pachkaProperties;
+
+    public PachkaService(PachkaProperties pachkaProperties) {
+        this.pachkaProperties = pachkaProperties;
+    }
 
     @Override
     public ResponseEntity<PachkaResponse> sendMessage(String message, String messageId) {
-        HttpEntity request = buildRequest(message, messageId);
+        HttpEntity<Map<String, Object>> request = buildRequest(message, messageId);
         try {
-            ResponseEntity<PachkaResponse> response = restTemplate.postForEntity(pachkaApiUrl, request, PachkaResponse.class);
+            ResponseEntity<PachkaResponse> response = restTemplate.postForEntity(pachkaProperties.getUrl(), request, PachkaResponse.class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 logger.info("Сообщение отправлено: {}", response.getBody());
             } else {
@@ -48,10 +44,10 @@ public class PachkaService implements ImessageSender<PachkaResponse> {
         }
     }
 
-    private HttpEntity buildRequest(String content, String messageId) {
+    private HttpEntity<Map<String, Object>> buildRequest(String content, String messageId) {
         Map<String, Object> message = new HashMap<>();
         message.put("entity_type", "discussion");
-        message.put("entity_id", entityId);
+        message.put("entity_id", pachkaProperties.getEntity_id());
         message.put("content", content);
 
         if (messageId != null && !messageId.isEmpty()) {
@@ -63,7 +59,7 @@ public class PachkaService implements ImessageSender<PachkaResponse> {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(pachkaApiToken);
+        headers.setBearerAuth(pachkaProperties.getToken());
 
         return new HttpEntity<>(requestBody, headers);
     }
