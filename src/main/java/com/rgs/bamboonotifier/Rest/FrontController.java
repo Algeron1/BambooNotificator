@@ -1,9 +1,9 @@
 package com.rgs.bamboonotifier.Rest;
 
+import com.rgs.bamboonotifier.DTO.DeployResult;
 import com.rgs.bamboonotifier.DTO.DeploymentInfo;
-import com.rgs.bamboonotifier.Entity.DeployMessage;
-import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.config.BambooProperties;
+import com.rgs.bamboonotifier.service.BambooService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,11 @@ import java.util.Map;
 @RestController
 class FrontController {
     private final BambooProperties bambooProperties;
-    private final DeployMessageRepository deployMessageRepository;
+    private final BambooService bambooService;
 
-    public FrontController(BambooProperties bambooProperties, DeployMessageRepository deployMessageRepository) {
+    public FrontController(BambooProperties bambooProperties, BambooService bambooService) {
         this.bambooProperties = bambooProperties;
-        this.deployMessageRepository = deployMessageRepository;
+        this.bambooService = bambooService;
     }
 
     @GetMapping("/deployments")
@@ -34,15 +34,15 @@ class FrontController {
             String environmentId = entry.getKey();
             String standName = entry.getValue();
 
-            DeployMessage deployMessage = deployMessageRepository.findByEnvironmentId(environmentId);
-            if (deployMessage != null) {
+           DeployResult result = bambooService.getDeploymentStatus(environmentId);
+            if (result != null) {
                 DeploymentInfo deploymentInfo = new DeploymentInfo();
                 deploymentInfo.setEnvironmentId(standName);
-                deploymentInfo.setDeployVersion(deployMessage.getDeployResult().getDeploymentVersion().getName());
-                deploymentInfo.setStatus(deployMessage.getDeployResult().getDeploymentState());
-                deploymentInfo.setStartedDate(formatDate(deployMessage.getDeployResult().getStartedDate()));
-                deploymentInfo.setFinishedDate(formatDate(deployMessage.getDeployResult().getFinishedDate()));
-                deploymentInfo.setAuthor(deployMessage.getDeployResult().getDeploymentVersion().getCreatorDisplayName());
+                deploymentInfo.setDeployVersion(result.getDeploymentVersion().getName());
+                deploymentInfo.setStatus(result.getDeploymentState());
+                deploymentInfo.setStartedDate(result.getStartedDate() == null ? null : formatDate(result.getStartedDate()));
+                deploymentInfo.setFinishedDate(result.getFinishedDate() == null ? null : formatDate(result.getFinishedDate()));
+                deploymentInfo.setAuthor(result.getDeploymentVersion().getCreatorDisplayName() == null ? "Автодеплой" : result.getDeploymentVersion().getCreatorDisplayName());
                 deployments.add(deploymentInfo);
             }
         }

@@ -14,9 +14,12 @@
 <body class="p-4">
 
 <div class="container">
-    <h1 class="mb-4">Список подключенных стендов и их состояние</h1>
-
-    <div id="deploymentsList" class="row gy-3"></div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Состояние подключенных стендов</h1>
+        <button class="btn btn-secondary" onclick="alert('Функционал в разработке')">Режим админа</button>
+    </div>
+    <h5 class="mb-0">Автообновление каждые 30 секунд</h5>
+    <div id="deploymentsList" class="gy-3"></div>
 </div>
 
 <script>
@@ -24,37 +27,58 @@
         const response = await fetch('/deployments');
         const deployments = await response.json();
 
+        // Группируем по стенду
+        const grouped = {};
+        deployments.forEach(deploy => {
+            const [stand, system] = deploy.environmentId.split("_");
+            if (!grouped[stand]) grouped[stand] = [];
+            grouped[stand].push({ ...deploy, system });
+        });
+
         const container = document.getElementById('deploymentsList');
         container.innerHTML = '';
 
-        deployments.forEach(deploy => {
-            const statusClass = {
-                'SUCCESS': 'status-success',
-                'ERROR': 'status-error',
-                'IN_PROGRESS': 'status-in-progress',
-                'UNKNOWN': 'status-unknown'
-            }[deploy.status] || 'status-unknown';
+        for (const [standName, deploys] of Object.entries(grouped)) {
+            const standBlock = document.createElement('div');
+            standBlock.className = 'mb-5';
 
-            const card = document.createElement('div');
-            card.className = 'col-12 col-md-6 col-lg-4';
-            card.innerHTML = `
-            <div class="card shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title">${deploy.environmentId}</h5>
-                <p class="card-text">📦Версия: <strong>${deploy.deployVersion}</strong></p>
-                <p class="card-text">🕓Старт: ${deploy.startedDate || '-'}</p>
-                <p class="card-text">🕔Финиш: ${deploy.finishedDate || '-'}</p>
-                <p class="card-text">📊Статус: <span class="${statusClass}">${deploy.status}</span></p>
-                 <p class="card-text">👨‍💻Автор: ${deploy.author || '-'}</p>
-              </div>
-            </div>
-          `;
-            container.appendChild(card);
-        });
+            standBlock.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">${standName}</h3>
+                    <button class="btn btn-primary" onclick="alert('Функционал в разработке')">Просьба не деплоить</button>
+                </div>
+            `;
+
+            deploys.forEach(deploy => {
+                const statusClass = {
+                    'SUCCESS': 'status-success',
+                    'ERROR': 'status-error',
+                    'IN_PROGRESS': 'status-in-progress',
+                    'UNKNOWN': 'status-unknown'
+                }[deploy.status] || 'status-unknown';
+
+                const card = document.createElement('div');
+                card.className = 'card shadow-sm mb-3';
+
+                card.innerHTML = `
+                    <div class="card-body">
+                        <h5 class="card-title">${deploy.system}</h5>
+                        <p class="mb-1">📦 Версия: <strong>${deploy.deployVersion}</strong></p>
+                        <p class="mb-1">🕓 Начало: ${deploy.startedDate || '-'}</p>
+                        <p class="mb-1">🕔 Завершение: ${deploy.finishedDate || '-'}</p>
+                        <p class="mb-1">👨‍💻 Автор: ${deploy.author || '-'}</p>
+                        <p class="mb-0">📊 Статус: <span class="${statusClass}">${deploy.status}</span></p>
+                    </div>
+                `;
+                standBlock.appendChild(card);
+            });
+
+            container.appendChild(standBlock);
+        }
     }
 
     fetchDeployments();
-    setInterval(fetchDeployments, 30000); // обновлять каждые 30 сек
+    setInterval(fetchDeployments, 30000);
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
