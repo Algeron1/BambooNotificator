@@ -4,12 +4,12 @@ import com.rgs.bamboonotifier.Entity.DeployMessage;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface DeployMessageRepository extends CrudRepository<DeployMessage, String> {
 
-    DeployMessage findByEnvironmentId(String envorinmentId);
-
     DeployMessage findByDeployId(Long deployId);
 
-    DeployMessage findFirstByEnvironmentIdOrderByCreatedAtDesc(String environmentId);
+    List<DeployMessage> findAllByEnvironmentIdOrderByCreatedAtDesc(String environmentId);
 }

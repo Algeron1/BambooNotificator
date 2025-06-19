@@ -41,4 +41,9 @@ public class MessageSender {
         pachkaMessageSender.sendDeployBanMessage(deployBan);
         telegramMessageSender.sendDeployBanMessage(deployBan);
     }
+
+    public void sendTextMessage(String text) {
+        pachkaMessageSender.sendtextMessage(text);
+        telegramMessageSender.sendtextMessage(text);
+    }
 }

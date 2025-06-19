@@ -11,14 +11,15 @@ import java.util.Date;
 public class DeployBan implements Serializable {
 
     @Id
-    private Long id;
+    private String id;
     private String standName;
     private String reason;
     private String author;
     private LocalDateTime from;
     private LocalDateTime to;
+    private String pinCode;
 
-    public DeployBan(Long id, String standName, String reason, String author, LocalDateTime from, LocalDateTime to) {
+    public DeployBan(String id, String standName, String reason, String author, LocalDateTime from, LocalDateTime to) {
         this.id = id;
         this.standName = standName;
         this.reason = reason;
@@ -27,11 +28,11 @@ public class DeployBan implements Serializable {
         this.to = to;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -73,5 +74,13 @@ public class DeployBan implements Serializable {
 
     public void setTo(LocalDateTime to) {
         this.to = to;
+    }
+
+    public String getPinCode() {
+        return pinCode;
+    }
+
+    public void setPinCode(String pinCode) {
+        this.pinCode = pinCode;
     }
 }

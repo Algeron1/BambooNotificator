@@ -10,6 +10,16 @@ public class DeploymentInfo {
     private String finishedDate;
     private String author;
     private String branchName;
+    private String progressStatus;
+    private String pinCode;
+
+    public String getPinCode() {
+        return pinCode;
+    }
+
+    public void setPinCode(String pinCode) {
+        this.pinCode = pinCode;
+    }
 
     public String getBranchName() {
         return branchName;
@@ -73,5 +83,13 @@ public class DeploymentInfo {
 
     public void setFinishedDate(String finishedDate) {
         this.finishedDate = finishedDate;
+    }
+
+    public String getProgressStatus() {
+        return progressStatus;
+    }
+
+    public void setProgressStatus(String progressStatus) {
+        this.progressStatus = progressStatus;
     }
 }

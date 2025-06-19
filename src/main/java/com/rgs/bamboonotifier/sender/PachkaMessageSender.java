@@ -45,4 +45,10 @@ public class PachkaMessageSender extends AbstractMessageSender {
         if (!pachkaEnabled) return;
         pachkaService.sendMessage(formatDeployBanMessage(deployBan), null);
     }
+
+    @Override
+    public void sendtextMessage(String text) {
+        if (!pachkaEnabled) return;
+        pachkaService.sendMessage(text, null);
+    }
 }

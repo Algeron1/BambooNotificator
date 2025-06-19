@@ -21,6 +21,8 @@ public abstract class AbstractMessageSender<T> {
 
     public abstract void sendDeployBanMessage(DeployBan deployBan);
 
+    public abstract void sendtextMessage(String text);
+
     protected String formatMessage(DeployResult deployResult, String standName) {
         return String.format(getTemplate(deployResult),
                 standName,
@@ -36,11 +38,11 @@ public abstract class AbstractMessageSender<T> {
 
     protected String formatDeployBanMessage(DeployBan deployBan) {
         return String.format(ApplicationConstants.DEPLOY_BAN_MESSAGE_TEMPLATE,
-        deployBan.getStandName(),
-        deployBan.getReason(),
-        formatDate(deployBan.getFrom()),
-        formatDate(deployBan.getTo()),
-        deployBan.getAuthor()
+                deployBan.getStandName(),
+                deployBan.getReason(),
+                formatDate(deployBan.getFrom()),
+                formatDate(deployBan.getTo()),
+                deployBan.getAuthor()
         );
     }
 
@@ -65,10 +67,6 @@ public abstract class AbstractMessageSender<T> {
 
     protected void saveDeployMessage(DeployMessage message) {
         deployMessageRepository.save(message);
-    }
-
-    protected DeployMessage getDeployMessage(Long deployId) {
-        return deployMessageRepository.findByDeployId(deployId);
     }
 }
 

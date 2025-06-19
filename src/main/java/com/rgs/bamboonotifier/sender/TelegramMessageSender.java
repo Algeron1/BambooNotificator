@@ -47,4 +47,10 @@ public class TelegramMessageSender extends AbstractMessageSender {
         if (!telegramEnabled) return;
         telegramService.sendMessage(formatDeployBanMessage(deployBan), null);
     }
+
+    @Override
+    public void sendtextMessage(String text) {
+        if (!telegramEnabled) return;
+        telegramService.sendMessage(text, null);
+    }
 }
