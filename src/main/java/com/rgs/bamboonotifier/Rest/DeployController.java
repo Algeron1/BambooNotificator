@@ -23,10 +23,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@RestController
-class FrontController {
+@RestController("/")
+class DeployController {
 
-    private static final Logger logger = LoggerFactory.getLogger(FrontController.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeployController.class);
 
     private final RedisTemplate<String, String> redisTemplate;
     private final BambooProperties bambooProperties;
@@ -35,12 +35,12 @@ class FrontController {
     private final MessageSender messageSender;
     private final DeployBanRepository deployBanRepository;
 
-    public FrontController(BambooProperties bambooProperties,
-                           DeployMessageRepository deployMessageRepository,
-                           RedisTemplate<String, String> redisTemplate,
-                           ObjectMapper objectMapper,
-                           MessageSender messageSender,
-                           DeployBanRepository deployBanRepository) {
+    public DeployController(BambooProperties bambooProperties,
+                            DeployMessageRepository deployMessageRepository,
+                            RedisTemplate<String, String> redisTemplate,
+                            ObjectMapper objectMapper,
+                            MessageSender messageSender,
+                            DeployBanRepository deployBanRepository) {
         this.bambooProperties = bambooProperties;
         this.deployMessageRepository = deployMessageRepository;
         this.redisTemplate = redisTemplate;
@@ -94,7 +94,11 @@ class FrontController {
     }
 
     @PostMapping("/deploy-ban")
-    public ResponseEntity<Void> createBan(@RequestBody DeployBan ban) {
+    public ResponseEntity<String> createBan(@RequestBody DeployBan ban) {
+
+        if (ban.getFrom().isBefore(LocalDateTime.now())) {
+           return ResponseEntity.badRequest().body("Дата начала не может быть в прошлом");
+        }
 
         ban.setId(UUID.randomUUID().toString());
         String key = "banMessage:" + ban.getId();
@@ -103,7 +107,7 @@ class FrontController {
         try {
             String json = objectMapper.writeValueAsString(ban);
             redisTemplate.opsForValue().set(key, json, ttl);
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             logger.error("Ошибка при сохраненнии DeployBan: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
@@ -148,22 +152,7 @@ class FrontController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Бан не найден");
     }
 
-
-    @PostMapping("/sendText")
-    public void sendTextMessage(@RequestBody String message) {
-        if (message == null || message.isEmpty()) {
-            return;
-        }
-        try {
-            messageSender.sendTextMessage(message);
-            logger.info("Отправка сообщения через панель администратора успешна");
-        } catch (Exception e) {
-            logger.error("Ошибка при отправке сообщения через панель администратора: {}", e.getMessage());
-        }
-    }
-
     private String formatDate(Date date) {
         return new SimpleDateFormat("dd.MM.yyyy HH:mm").format(date);
     }
-
 }

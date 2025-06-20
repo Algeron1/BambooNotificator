@@ -94,7 +94,7 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="mb-0">📊 Состояние стендов</h1>
-        <button class="btn btn-success" onclick="alert('Функционал в разработке')">Режим админа</button>
+        <button class="btn btn-success" onclick="location.href='/admin'">Режим админа</button>
     </div>
     <h6 class="text-muted mb-4">Автообновление каждые 30 секунд</h6>
     <div id="deploymentsList"></div>
@@ -275,14 +275,20 @@
             return;
         }
 
-        await fetch('/deploy-ban', {
+        const response = await fetch('/deploy-ban', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({standName, reason, author, from, to, pinCode})
         });
 
-        bootstrap.Modal.getInstance(document.getElementById('banModal')).hide();
-        fetchDeployments();
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('banModal')).hide();
+            fetchDeployments();
+            showToast("Бан успешно установлен", 'success');
+        } else {
+            const error = await response.text();
+            showToast(error || "Ошибка при установке бана", 'danger');
+        }
     }
 
     function openRemoveBanModal(banId) {
@@ -347,5 +353,15 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<footer class="mt-5 text-center text-muted small">
+    <hr>
+    <p>Разработка — Эдуард Ядигаров</p>
+    <p>
+        📧 <a href="mailto:eduard_yadigarov@rgs.ru">eduard_yadigarov@rgs.ru</a> |
+        💬 <a href="https://t.me/el_eduardo" target="_blank">Telegram</a>
+        💬 <a href="https://vk.com/id13450731" target="_blank">VK</a>
+    </p>
+</footer>
 </body>
 </html>
