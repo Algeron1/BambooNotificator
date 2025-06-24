@@ -2,10 +2,10 @@ package com.rgs.bamboonotifier.sender;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
 import com.rgs.bamboonotifier.DTO.TelegramResponse;
-import com.rgs.bamboonotifier.Entity.DeployBan;
+import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.interfaces.IMessageSender;
-import org.springframework.beans.factory.annotation.Value;
+import com.rgs.bamboonotifier.service.NotificationSettingsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -13,17 +13,17 @@ import org.springframework.stereotype.Service;
 public class TelegramMessageSender extends AbstractMessageSender {
 
     private final IMessageSender<TelegramResponse> telegramService;
+    private final NotificationSettingsService notificationSettingsService;
 
-    @Value("${notification.telegram.enabled}")
-    private Boolean telegramEnabled;
-
-    public TelegramMessageSender(IMessageSender<TelegramResponse> telegramService) {
+    public TelegramMessageSender(IMessageSender<TelegramResponse> telegramService,
+                                 NotificationSettingsService notificationSettingsService) {
         this.telegramService = telegramService;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     @Override
     public void send(DeployResult deployResult, String standName, String environmentId, DeployMessage deployMessage) {
-        if (!telegramEnabled) return;
+        if (!notificationSettingsService.isTelegramEnabled()) return;
 
         String message = formatMessage(deployResult, standName);
         ResponseEntity<TelegramResponse> response;
@@ -43,14 +43,14 @@ public class TelegramMessageSender extends AbstractMessageSender {
     }
 
     @Override
-    public void sendDeployBanMessage(DeployBan deployBan) {
-        if (!telegramEnabled) return;
-        telegramService.sendMessage(formatDeployBanMessage(deployBan), null);
+    public void sendDeployBanMessage(DeployBanMessage deployBanMessage) {
+        if (!notificationSettingsService.isTelegramEnabled()) return;
+        telegramService.sendMessage(formatDeployBanMessage(deployBanMessage), null);
     }
 
     @Override
     public void sendtextMessage(String text) {
-        if (!telegramEnabled) return;
+        if (!notificationSettingsService.isTelegramEnabled()) return;
         telegramService.sendMessage(text, null);
     }
 }

@@ -2,11 +2,13 @@ package com.rgs.bamboonotifier.Rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rgs.bamboonotifier.DTO.AnnouncementMessageInfo;
 import com.rgs.bamboonotifier.DTO.DeployResult;
 import com.rgs.bamboonotifier.DTO.DeploymentInfo;
 import com.rgs.bamboonotifier.DTO.DeploymentsResponse;
-import com.rgs.bamboonotifier.Entity.DeployBan;
-import com.rgs.bamboonotifier.Repository.DeployBanRepository;
+import com.rgs.bamboonotifier.Entity.AnnouncementMessage;
+import com.rgs.bamboonotifier.Entity.DeployBanMessage;
+import com.rgs.bamboonotifier.Repository.AnnouncementMessageRepository;
 import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.config.BambooProperties;
 import com.rgs.bamboonotifier.sender.MessageSender;
@@ -33,20 +35,20 @@ class DeployController {
     private final DeployMessageRepository deployMessageRepository;
     private final ObjectMapper objectMapper;
     private final MessageSender messageSender;
-    private final DeployBanRepository deployBanRepository;
+    private final AnnouncementMessageRepository announcementMessageRepository;
 
     public DeployController(BambooProperties bambooProperties,
                             DeployMessageRepository deployMessageRepository,
                             RedisTemplate<String, String> redisTemplate,
                             ObjectMapper objectMapper,
                             MessageSender messageSender,
-                            DeployBanRepository deployBanRepository) {
+                            AnnouncementMessageRepository announcementMessageRepository) {
         this.bambooProperties = bambooProperties;
         this.deployMessageRepository = deployMessageRepository;
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
         this.messageSender = messageSender;
-        this.deployBanRepository = deployBanRepository;
+        this.announcementMessageRepository = announcementMessageRepository;
     }
 
     @GetMapping("/deployments")
@@ -73,11 +75,11 @@ class DeployController {
             }
         }
 
-        List<DeployBan> activeBans = redisTemplate.keys("banMessage:*").stream()
+        List<DeployBanMessage> activeBans = redisTemplate.keys("banMessage:*").stream()
                 .map(key -> {
                     String json = redisTemplate.opsForValue().get(key);
                     try {
-                        return objectMapper.readValue(json, DeployBan.class);
+                        return objectMapper.readValue(json, DeployBanMessage.class);
                     } catch (JsonProcessingException e) {
                         logger.error("Ошибка при получении DeployBan {}", e.getMessage());
                         return null;
@@ -89,15 +91,16 @@ class DeployController {
         DeploymentsResponse response = new DeploymentsResponse();
         response.setDeployments(deployments);
         response.setDeployBans(activeBans);
+        response.setAnnouncementMessageInfos(getAnnouncementMessageInfo());
 
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/deploy-ban")
-    public ResponseEntity<String> createBan(@RequestBody DeployBan ban) {
+    public ResponseEntity<String> createBan(@RequestBody DeployBanMessage ban) {
 
         if (ban.getFrom().isBefore(LocalDateTime.now())) {
-           return ResponseEntity.badRequest().body("Дата начала не может быть в прошлом");
+            return ResponseEntity.badRequest().body("Дата начала не может быть в прошлом");
         }
 
         ban.setId(UUID.randomUUID().toString());
@@ -136,9 +139,9 @@ class DeployController {
             if (json == null) continue;
 
             try {
-                DeployBan ban = objectMapper.readValue(json, DeployBan.class);
+                DeployBanMessage ban = objectMapper.readValue(json, DeployBanMessage.class);
                 if (ban.getId().equals(id)) {
-                    if (!ban.getPinCode().equals(pinCode) &&  !pinCode.equals("5418")) {
+                    if (!ban.getPinCode().equals(pinCode) && !pinCode.equals("5418")) {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Неверный пин-код");
                     }
                     redisTemplate.delete(key);
@@ -152,7 +155,53 @@ class DeployController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Бан не найден");
     }
 
+    @GetMapping("/announcements")
+    @ResponseBody
+    public ResponseEntity<Iterable<AnnouncementMessage>> getAnnouncements() {
+        List<AnnouncementMessage> announcementMessages = announcementMessageRepository.findAll();
+        if (announcementMessages.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(announcementMessages);
+    }
+
     private String formatDate(Date date) {
         return new SimpleDateFormat("dd.MM.yyyy HH:mm").format(date);
     }
+
+    private List<AnnouncementMessageInfo> getAnnouncementMessageInfo() {
+        Set<String> keys = redisTemplate.keys("announcementMessage:*");
+
+        if (keys == null || keys.isEmpty()) {
+            logger.info("Объявлений не найдено");
+            return Collections.emptyList();
+        }
+
+        List<AnnouncementMessageInfo> infos = new ArrayList<>(keys.size());
+
+        for (String key : keys) {
+            try {
+                String json = redisTemplate.opsForValue().get(key);
+                if (json == null) continue;
+
+                AnnouncementMessage announcement = objectMapper.readValue(json, AnnouncementMessage.class);
+
+                AnnouncementMessageInfo info = new AnnouncementMessageInfo();
+                info.setId(announcement.getId());
+                info.setFrom(announcement.getFrom());
+                info.setTo(announcement.getTo());
+                info.setText(announcement.getText());
+                info.setAuthor(announcement.getAuthor());
+                info.setWarningLevel(announcement.getWarningLevel());
+
+                infos.add(info);
+            } catch (Exception e) {
+                logger.warn("Ошибка при обработке объявления по ключу {}: {}", key, e.getMessage());
+            }
+        }
+
+        logger.info("Найдено {} объявлений", infos.size());
+        return infos;
+    }
+
 }

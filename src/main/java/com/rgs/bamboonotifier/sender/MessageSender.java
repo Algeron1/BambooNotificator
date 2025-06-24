@@ -1,7 +1,7 @@
 package com.rgs.bamboonotifier.sender;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
-import com.rgs.bamboonotifier.Entity.DeployBan;
+import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import org.springframework.stereotype.Service;
@@ -37,9 +37,9 @@ public class MessageSender {
         pachkaMessageSender.send(deployResult, standName, environmentId, deployMessage);
     }
 
-    public void sendDeployBanMessage(DeployBan deployBan) {
-        pachkaMessageSender.sendDeployBanMessage(deployBan);
-        telegramMessageSender.sendDeployBanMessage(deployBan);
+    public void sendDeployBanMessage(DeployBanMessage deployBanMessage) {
+        pachkaMessageSender.sendDeployBanMessage(deployBanMessage);
+        telegramMessageSender.sendDeployBanMessage(deployBanMessage);
     }
 
     public void sendTextMessage(String text) {

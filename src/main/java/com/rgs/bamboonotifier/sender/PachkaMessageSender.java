@@ -2,10 +2,10 @@ package com.rgs.bamboonotifier.sender;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
 import com.rgs.bamboonotifier.DTO.PachkaResponse;
-import com.rgs.bamboonotifier.Entity.DeployBan;
+import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.interfaces.IMessageSender;
-import org.springframework.beans.factory.annotation.Value;
+import com.rgs.bamboonotifier.service.NotificationSettingsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -13,17 +13,17 @@ import org.springframework.stereotype.Service;
 public class PachkaMessageSender extends AbstractMessageSender {
 
     private final IMessageSender<PachkaResponse> pachkaService;
+    private final NotificationSettingsService notificationSettingsService;
 
-    @Value("${notification.pachka.enabled}")
-    private Boolean pachkaEnabled;
-
-    public PachkaMessageSender(IMessageSender<PachkaResponse> pachkaService) {
+    public PachkaMessageSender(IMessageSender<PachkaResponse> pachkaService,
+                               NotificationSettingsService notificationSettingsService) {
         this.pachkaService = pachkaService;
+        this.notificationSettingsService = notificationSettingsService;
     }
 
     @Override
     public void send(DeployResult deployResult, String standName, String environmentId, DeployMessage deployMessage) {
-        if (!pachkaEnabled) return;
+        if (!notificationSettingsService.isPachkaEnabled()) return;
 
         String message = formatMessage(deployResult, standName);
         ResponseEntity<PachkaResponse> response;
@@ -41,14 +41,14 @@ public class PachkaMessageSender extends AbstractMessageSender {
     }
 
     @Override
-    public void sendDeployBanMessage(DeployBan deployBan) {
-        if (!pachkaEnabled) return;
-        pachkaService.sendMessage(formatDeployBanMessage(deployBan), null);
+    public void sendDeployBanMessage(DeployBanMessage deployBanMessage) {
+        if (!notificationSettingsService.isPachkaEnabled()) return;
+        pachkaService.sendMessage(formatDeployBanMessage(deployBanMessage), null);
     }
 
     @Override
     public void sendtextMessage(String text) {
-        if (!pachkaEnabled) return;
+        if (!notificationSettingsService.isPachkaEnabled()) return;
         pachkaService.sendMessage(text, null);
     }
 }

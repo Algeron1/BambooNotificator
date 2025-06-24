@@ -9,6 +9,30 @@
             background-color: #f8f9fa;
         }
 
+        .announcement-card {
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #212529;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+            border-left: 5px solid;
+        }
+
+        .announcement-info {
+            background-color: #e9f7ef;
+            border-color: #198754;
+        }
+
+        .announcement-warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .announcement-critical {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+
         .stand-card {
             border: none;
             border-radius: 1rem;
@@ -55,6 +79,7 @@
             background-color: #fff3cd !important;
         }
 
+
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -97,6 +122,7 @@
         <button class="btn btn-success" onclick="location.href='/admin'">Режим админа</button>
     </div>
     <h6 class="text-muted mb-4">Автообновление каждые 30 секунд</h6>
+    <div id="announcementBlock" class="mb-4"></div>
     <div id="deploymentsList"></div>
 </div>
 
@@ -178,11 +204,33 @@
         const response = await fetch('/deployments');
         const data = await response.json();
         const deployments = data.deployments;
-        const deployBans = data.deployBans;
+        const deployBanMessages = data.deployBans;
+        const announcements = data.announcementMessageInfos || [];
+
+        const announcementContainer = document.getElementById('announcementBlock');
+        announcementContainer.innerHTML = '';
+
+        announcements.forEach(ann => {
+            let levelClass = 'announcement-info';
+            if (ann.warningLevel === 'WARNING') levelClass = 'announcement-warning';
+            if (ann.warningLevel === 'CRITICAL') levelClass = 'announcement-critical';
+            if (ann.warningLevel === 'INFO') levelClass = 'announcement-info';
+
+            const announcementHtml = `
+      <div class="announcement-card ${levelClass}">
+        <strong>${ann.author}</strong> | Актуально до: ${new Date(ann.to).toLocaleString()}<br>
+        <div class="mt-2">${ann.text}</div>
+      </div>
+    `;
+
+            announcementContainer.insertAdjacentHTML('beforeend', announcementHtml);
+        });
 
         const grouped = {};
         deployments.forEach(deploy => {
-            const [stand, system] = deploy.environmentId.split("_");
+            const envParts = deploy.environmentId.split("_");
+            const stand = envParts[0];
+            const system = envParts.slice(1).join("_");
             if (!grouped[stand]) grouped[stand] = [];
             grouped[stand].push({...deploy, system});
         });
@@ -194,7 +242,7 @@
             const standCard = document.createElement('div');
             standCard.className = 'stand-card';
 
-            const bans = deployBans.filter(b => b.standName === standName);
+            const bans = deployBanMessages.filter(b => b.standName === standName);
             let banBlock = '';
 
             if (bans.length > 0) {
@@ -210,7 +258,7 @@
             }
 
 
-        standCard.innerHTML = `
+            standCard.innerHTML = `
         <div class="stand-header">
           <h3 class="mb-0">${standName}</h3>
           <button class="btn btn-primary btn-sm" onclick="openBanModal('${standName}')">Просьба не деплоить</button>
@@ -219,22 +267,22 @@
         <div class="row gy-3"></div>
       `;
 
-        const row = standCard.querySelector('.row');
-        deploys.forEach(deploy => {
-            let statusText = deploy.status;
-            let statusClass = 'bg-unknown-custom';
-            if (deploy.progressStatus === 'IN_PROGRESS') {
-                statusText = 'Идёт деплой <span class="spinner-border spinner-border-sm ms-1"></span>';
-                statusClass = 'bg-in-progress-custom';
-            } else {
-                if (deploy.status === 'SUCCESS') statusClass = 'bg-success-custom';
-                if (deploy.status === 'ERROR') statusClass = 'bg-error-custom';
-                if (deploy.status === 'UNKNOWN') statusClass = 'bg-unknown-custom';
-            }
+            const row = standCard.querySelector('.row');
+            deploys.forEach(deploy => {
+                let statusText = deploy.status;
+                let statusClass = 'bg-unknown-custom';
+                if (deploy.progressStatus === 'IN_PROGRESS') {
+                    statusText = 'Идёт деплой <span class="spinner-border spinner-border-sm ms-1"></span>';
+                    statusClass = 'bg-in-progress-custom';
+                } else {
+                    if (deploy.status === 'SUCCESS') statusClass = 'bg-success-custom';
+                    if (deploy.status === 'ERROR') statusClass = 'bg-error-custom';
+                    if (deploy.status === 'UNKNOWN') statusClass = 'bg-unknown-custom';
+                }
 
-            const cardCol = document.createElement('div');
-            cardCol.className = 'col-12 col-md-6 col-lg-4';
-            cardCol.innerHTML = `
+                const cardCol = document.createElement('div');
+                cardCol.className = 'col-12 col-md-6 col-lg-4';
+                cardCol.innerHTML = `
           <div class="card card-modern h-100 ${statusClass}">
             <div class="card-body">
               <h5 class="card-title">${deploy.system}</h5>
@@ -247,11 +295,11 @@
             </div>
           </div>
         `;
-            row.appendChild(cardCol);
-        });
+                row.appendChild(cardCol);
+            });
 
-        container.appendChild(standCard);
-    }
+            container.appendChild(standCard);
+        }
     }
 
     function openBanModal(standName) {
@@ -357,10 +405,13 @@
 <footer class="mt-5 text-center text-muted small">
     <hr>
     <p>Разработка — Эдуард Ядигаров</p>
+    📧 <a href="mailto:eduard_yadigarov@rgs.ru">Почта</a> |
+    💬 <a href="https://t.me/el_eduardo" target="_blank">Telegram</a>
+    💬 <a href="https://vk.com/id13450731" target="_blank">VK</a>
     <p>
-        📧 <a href="mailto:eduard_yadigarov@rgs.ru">eduard_yadigarov@rgs.ru</a> |
-        💬 <a href="https://t.me/el_eduardo" target="_blank">Telegram</a>
-        💬 <a href="https://vk.com/id13450731" target="_blank">VK</a>
+        💬 <a href="https://t.me/+U-qA4hKIGVk2ODcy" target="_blank"><strong>Канал с уведомлениями Telegram</strong></a>
+        💬 <a href="https://app.pachca.com/chats/26092493" target="_blank"><strong>Канал с уведомлениями
+        Пачка</strong></a>
     </p>
 </footer>
 </body>

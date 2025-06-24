@@ -1,7 +1,7 @@
 package com.rgs.bamboonotifier.sender;
 
 import com.rgs.bamboonotifier.DTO.DeployResult;
-import com.rgs.bamboonotifier.Entity.DeployBan;
+import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.constants.ApplicationConstants;
@@ -19,7 +19,7 @@ public abstract class AbstractMessageSender<T> {
 
     public abstract void send(DeployResult deployResult, String standName, String environmentId, DeployMessage deployMessage);
 
-    public abstract void sendDeployBanMessage(DeployBan deployBan);
+    public abstract void sendDeployBanMessage(DeployBanMessage deployBanMessage);
 
     public abstract void sendtextMessage(String text);
 
@@ -36,13 +36,13 @@ public abstract class AbstractMessageSender<T> {
         );
     }
 
-    protected String formatDeployBanMessage(DeployBan deployBan) {
+    protected String formatDeployBanMessage(DeployBanMessage deployBanMessage) {
         return String.format(ApplicationConstants.DEPLOY_BAN_MESSAGE_TEMPLATE,
-                deployBan.getStandName(),
-                deployBan.getReason(),
-                formatDate(deployBan.getFrom()),
-                formatDate(deployBan.getTo()),
-                deployBan.getAuthor()
+                deployBanMessage.getStandName(),
+                deployBanMessage.getReason(),
+                formatDate(deployBanMessage.getFrom()),
+                formatDate(deployBanMessage.getTo()),
+                deployBanMessage.getAuthor()
         );
     }
 

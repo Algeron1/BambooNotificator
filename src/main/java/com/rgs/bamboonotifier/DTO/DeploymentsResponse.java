@@ -1,12 +1,13 @@
 package com.rgs.bamboonotifier.DTO;
 
-import com.rgs.bamboonotifier.Entity.DeployBan;
+import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 
 import java.util.List;
 
 public class DeploymentsResponse {
     private List<DeploymentInfo> deployments;
-    private List<DeployBan> deployBans;
+    private List<DeployBanMessage> deployBanMessages;
+    private List<AnnouncementMessageInfo> announcementMessageInfos;
 
     public List<DeploymentInfo> getDeployments() {
         return deployments;
@@ -16,11 +17,19 @@ public class DeploymentsResponse {
         this.deployments = deployments;
     }
 
-    public List<DeployBan> getDeployBans() {
-        return deployBans;
+    public List<DeployBanMessage> getDeployBans() {
+        return deployBanMessages;
     }
 
-    public void setDeployBans(List<DeployBan> deployBans) {
-        this.deployBans = deployBans;
+    public void setDeployBans(List<DeployBanMessage> deployBanMessages) {
+        this.deployBanMessages = deployBanMessages;
+    }
+
+    public List<AnnouncementMessageInfo> getAnnouncementMessageInfos() {
+        return announcementMessageInfos;
+    }
+
+    public void setAnnouncementMessageInfos(List<AnnouncementMessageInfo> announcementMessageInfos) {
+        this.announcementMessageInfos = announcementMessageInfos;
     }
 }

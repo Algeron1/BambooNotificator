@@ -5,10 +5,9 @@ import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
-@RedisHash("DeployBan")
-public class DeployBan implements Serializable {
+@RedisHash("DeployBanMessage")
+public class DeployBanMessage implements Serializable {
 
     @Id
     private String id;
@@ -19,7 +18,7 @@ public class DeployBan implements Serializable {
     private LocalDateTime to;
     private String pinCode;
 
-    public DeployBan(String id, String standName, String reason, String author, LocalDateTime from, LocalDateTime to) {
+    public DeployBanMessage(String id, String standName, String reason, String author, LocalDateTime from, LocalDateTime to) {
         this.id = id;
         this.standName = standName;
         this.reason = reason;
