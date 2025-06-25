@@ -50,8 +50,8 @@ public class BambooScheduler {
                 if (lastMessage != null && lastMessage.getDeployResult() != null) {
                     lastDeploy = lastMessage.getDeployResult();
                 }
-                if (lastDeploy == null || !(lastDeploy.getDeploymentState().equalsIgnoreCase(status.getDeploymentState())
-                        && lastDeploy.getId() == status.getId())) {
+                if (lastDeploy == null || !lastDeploy.getDeploymentState().equalsIgnoreCase(status.getDeploymentState())
+                        && lastDeploy.getId() == status.getId()) {
                     messageSender.sendMessage(status, standName, environmentId);
                     logger.info("Отправлено уведомление по стенду {}", standName);
                 }

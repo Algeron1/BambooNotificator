@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>RGS Bamboo Notifier — Админка</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .stand-card {
+            border: none;
+            border-radius: 1rem;
+            background-color: #fff;
+            box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-modern {
+            border-radius: 0.5rem;
+        }
+
+        .footer {
+            margin-top: 5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .announcement-card {
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #212529;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+            border-left: 5px solid;
+        }
+
+        .announcement-info {
+            background-color: #e9f7ef;
+            border-color: #198754;
+        }
+
+        .announcement-warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .announcement-critical {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 0.2em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">🛠️ Админ-панель</h1>
+        <button class="btn btn-outline-danger btn-modern" onclick="logout()">Выйти</button>
+    </div>
+
+    <div class="stand-card mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">📢 Активные объявления</h4>
+            <button class="btn btn-sm btn-outline-secondary" onclick="fetchAnnouncements()">
+                Обновить
+            </button>
+        </div>
+        <div id="currentAnnouncements" class="mt-3">
+            <div class="text-center">
+                <span class="loading-spinner"></span> Загрузка объявлений...
+            </div>
+        </div>
+    </div>
+
+    <!-- Блок отправки текста -->
+    <div class="stand-card">
+        <h4 class="mb-3">Отправить сообщение в каналы</h4>
+        <div class="mb-3">
+            <label class="form-label">Сообщение</label>
+            <textarea id="textMessage" class="form-control" rows="3" placeholder="Введите сообщение..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-modern" onclick="sendText()">Отправить</button>
+        <div id="resultMessage" class="mt-3"></div>
+    </div>
+
+    <!-- Блок создания объявления -->
+    <div class="stand-card">
+        <h4 class="mb-3">Создать объявление</h4>
+        <div class="mb-3">
+            <label class="form-label">Автор</label>
+            <input type="text" id="announcementAuthor" class="form-control" placeholder="Ваше имя">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Текст объявления</label>
+            <textarea id="announcementText" class="form-control" rows="3" placeholder="Введите текст..."></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Уровень важности</label>
+            <select id="announcementLevel" class="form-select" onchange="updateLevelStyle(this)">
+                <option value="">Выберите уровень</option>
+                <option value="INFO" style="background-color: #e9f7ef;">Инфо</option>
+                <option value="WARNING" style="background-color: #fff3cd;">Внимание</option>
+                <option value="CRITICAL" style="background-color: #f8d7da;">Критично</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Действует до (если не указано объявление будет удалено через сутки)</label>
+            <input type="datetime-local" id="announcementExpires" class="form-control">
+        </div>
+        <button class="btn btn-primary btn-modern" onclick="sendAnnouncement()">Опубликовать</button>
+        <div id="resultAnnouncement" class="mt-3"></div>
+    </div>
+
+    <div class="stand-card mb-4">
+        <h4 class="mb-3">⚙️ Настройки рассылки</h4>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="settingTelegram" onchange="changeSettings()">
+            <label class="form-check-label" for="settingTelegram">Отправлять уведомления в Telegram</label>
+        </div>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="settingPachka" onchange="changeSettings()">
+            <label class="form-check-label" for="settingPachka">Отправлять уведомления в Пачку</label>
+        </div>
+    </div>
+</div>
+
+<footer class="footer">
+    <hr>
+    <p>Разработка — Эдуард Ядигаров</p>
+    <p>
+        📧 <a href="mailto:eduard_yadigarov@rgs.ru">Почта</a> |
+        💬 <a href="https://t.me/el_eduardo" target="_blank">Telegram</a> |
+        💬 <a href="https://vk.com/id13450731" target="_blank">VK</a>
+        💬 <a href="https://t.me/+U-qA4hKIGVk2ODcy" target="_blank"><strong>Канал Telegram</strong></a>
+        💬 <a href="https://app.pachca.com/chats/26092493" target="_blank"><strong>Канал Пачка</strong></a>
+    </p>
+</footer>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+    <div id="toastContainer"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', fetchAnnouncements);
+    async function fetchAnnouncements() {
+        try {
+            const response = await fetch('/admin/announcements');
+            if (!response.ok) throw new Error('Ошибка загрузки объявлений');
+
+            const announcements = await response.json();
+            renderAnnouncements(announcements);
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('currentAnnouncements').innerHTML =
+                '<div class="alert alert-warning">Не удалось загрузить объявления</div>';
+        }
+    }
+
+    function updateLevelStyle(select) {
+        const value = select.value;
+        select.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+
+        if (value === 'INFO') select.classList.add('bg-success', 'text-white');
+        else if (value === 'WARNING') select.classList.add('bg-warning');
+        else if (value === 'CRITICAL') select.classList.add('bg-danger', 'text-white');
+        else select.className = 'form-select'; // сброс цвета если пусто
+    }
+
+    function renderAnnouncements(announcements) {
+        const container = document.getElementById('currentAnnouncements');
+
+        if (!announcements || announcements.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">Нет активных объявлений</div>';
+            return;
+        }
+
+        let html = '';
+        announcements.forEach(ann => {
+            let levelClass = 'announcement-info';
+            if (ann.warningLevel === 'WARNING') levelClass = 'announcement-warning';
+            if (ann.warningLevel === 'CRITICAL') levelClass = 'announcement-critical';
+
+            const expiresDate = formatDateTime(ann.to);
+            const createdDate = formatDateTime(ann.from);
+
+            html += `
+    <div class="announcement-card ${levelClass} mb-3">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <div class="d-flex justify-content-between">
+                    <strong>${ann.author}</strong>
+                    <small>${createdDate}</small>
+                </div>
+                <div class="mt-2 mb-2">${ann.text}</div>
+                <div class="text-muted small">
+                    <div>Уровень: ${getLevelName(ann.warningLevel)}</div>
+                    <div>Действует до: ${expiresDate}</div>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger ms-2"
+                    onclick="deleteAnnouncement('${ann.id}')"
+                    title="Удалить объявление">
+                🗑️
+            </button>
+        </div>
+    </div>
+    `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function deleteAnnouncement(id) {
+        if (!confirm('Вы уверены, что хотите удалить это объявление?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/announcement/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                showToast('Объявление успешно удалено', 'success');
+                await fetchAnnouncements();
+            } else {
+                const errorText = await response.text();
+                showToast(`Ошибка: ${errorText}`, 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка при удалении объявления:', error);
+            showToast('Ошибка сети при удалении объявления', 'danger');
+        }
+    }
+
+    function getLevelName(level) {
+        switch (level) {
+            case 'INFO':
+                return 'Информационный';
+            case 'WARNING':
+                return 'Важное';
+            case 'CRITICAL':
+                return 'Критическое';
+            default:
+                return level;
+        }
+    }
+
+    async function sendText() {
+        const message = document.getElementById('textMessage').value;
+        const result = document.getElementById('resultMessage');
+
+        if (!message.trim()) {
+            result.innerHTML = '<div class="text-danger">Введите сообщение для отправки.</div>';
+            return;
+        }
+
+        const response = await fetch('admin/sendText', {
+            method: 'POST',
+            headers: {'Content-Type': 'text/plain'},
+            body: message
+        });
+
+        if (response.ok) {
+            result.innerHTML = '<div class="text-success">Сообщение успешно отправлено.</div>';
+            document.getElementById('textMessage').value = '';
+        } else {
+            const errorText = await response.text();
+            result.innerHTML = `<div class="text-danger">Ошибка: ${errorText}</div>`;
+        }
+    }
+
+    async function sendAnnouncement() {
+        const text = document.getElementById('announcementText').value.trim();
+        const author = document.getElementById('announcementAuthor').value.trim();
+        const level = document.getElementById('announcementLevel').value;
+        const expires = document.getElementById('announcementExpires').value;
+        const result = document.getElementById('resultAnnouncement');
+
+        if (!text || !author || !level) {
+            result.innerHTML = '<div class="text-danger">Заполните все обязательные поля для объявления.</div>';
+            return;
+        }
+
+        const response = await fetch('/admin/announcement', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                text,
+                author,
+                warningLevel: level,
+                to: expires
+            })
+        });
+
+        if (response.ok) {
+            result.innerHTML = '<div class="text-success">Объявление успешно опубликовано.</div>';
+            document.getElementById('announcementText').value = '';
+            document.getElementById('announcementAuthor').value = '';
+            document.getElementById('announcementLevel').value = '';
+            document.getElementById('announcementExpires').value = '';
+
+            await fetchAnnouncements();
+        } else {
+            const errorText = await response.text();
+            result.innerHTML = `<div class="text-danger">Ошибка: ${errorText}</div>`;
+        }
+    }
+    loadCurrentSettings();
+
+    function formatDateTime(dateString) {
+        if (!dateString) return 'не указано';
+        const date = new Date(dateString);
+        return date.toLocaleString('ru-RU');
+    }
+
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toastContainer');
+        const toastId = 'toast-' + Date.now();
+
+        const toastHTML = `
+            <div id="${toastId}" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">Уведомление</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body bg-${type} text-white">
+                    ${message}
+                </div>
+            </div>
+        `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+
+        setTimeout(() => {
+            const toastElement = document.getElementById(toastId);
+            if (toastElement) {
+                toastElement.remove();
+            }
+        }, 5000);
+    }
+
+    async function loadCurrentSettings() {
+        try {
+            const resp = await fetch('/admin/currentsettings');
+            if (!resp.ok) throw new Error('Не удалось получить текущие настройки');
+            const settings = await resp.json(); // ожидаем { "notification.telegram.enabled": true/false, ... }
+            const telegramCheckbox = document.getElementById('settingTelegram');
+            const pachkaCheckbox = document.getElementById('settingPachka');
+            if (settings['notification.telegram.enabled'] !== undefined) {
+                telegramCheckbox.checked = settings['notification.telegram.enabled'];
+            }
+            if (settings['notification.pachka.enabled'] !== undefined) {
+                pachkaCheckbox.checked = settings['notification.pachka.enabled'];
+            }
+        } catch (e) {
+            console.error('Ошибка при загрузке текущих настроек:', e);
+        }
+    }
+
+    async function changeSettings() {
+        const telegramEnabled = document.getElementById('settingTelegram').checked;
+        const pachkaEnabled = document.getElementById('settingPachka').checked;
+
+        try {
+            const response = await fetch('/admin/changesettings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    'notification.telegram.enabled': telegramEnabled,
+                    'notification.pachka.enabled': pachkaEnabled
+                })
+            });
+
+            if (response.ok) {
+                showToast('Настройки успешно сохранены', 'success');
+            } else {
+                const errorText = await response.text();
+                showToast(`Ошибка: ${errorText}`, 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка при изменении настроек:', error);
+            showToast('Ошибка сети при сохранении настроек', 'danger');
+        }
+    }
+
+
+    function logout() {
+        window.location.href = '/';
+    }
+</script>
+</body>
+</html>
