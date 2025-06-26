@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - notifier-network
+    environment:
+      - TZ=Asia/Novosibirsk
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    command: ["redis-server", "--bind", "0.0.0.0"]
+
+  app:
+    image: bamboo-notifier
+    container_name: bamboo-notifier
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_LOCATION=optional:classpath:/;optional:classpath:/config/;optional:file:/app/config/
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - TZ=Asia/Novosibirsk
+    volumes:
+        - ./config:/app/config
+    networks:
+      - notifier-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  notifier-network:
+    driver: bridge
+
+volumes:
+  redis_data:
