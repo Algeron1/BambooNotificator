@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController("/")
-class DeployController {
+public class DeployController {
 
     private final MessageSender messageSender;
     private final DeployContollerService deployContollerService;

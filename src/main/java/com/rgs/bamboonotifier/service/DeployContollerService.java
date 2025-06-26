@@ -10,7 +10,6 @@ import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 import com.rgs.bamboonotifier.Repository.AnnouncementMessageRepository;
 import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.config.BambooProperties;
-import com.rgs.bamboonotifier.sender.MessageSender;
 import io.lettuce.core.RedisLoadingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
