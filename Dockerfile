@@ -1,7 +1,7 @@
 FROM eclipse-temurin:24-jdk-alpine
 
 WORKDIR /app
-COPY target/bamboo-notifier.jar app.jar
+COPY target/*.jar app.jar
 COPY src/main/resources/application-docker.yml /app/config/
 
 EXPOSE 8080

@@ -9,10 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.rgs</groupId>
-    <artifactId>RGSBambooNotifier</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>RGSBambooNotifier</name>
-    <description>RGSBambooNotifier</description>
+    <artifactId>bamboo-notifier</artifactId>
+    <name>bamboo-notifier</name>
+    <description>bamboo-notifier</description>
     <url/>
     <licenses>
         <license/>
