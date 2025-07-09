@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   redis:
@@ -20,7 +19,8 @@ services:
     command: ["redis-server", "--bind", "0.0.0.0"]
 
   app:
-    image: bamboo-notifier
+    build: .
+    env_file: .env
     container_name: bamboo-notifier
     ports:
       - "8080:8080"
@@ -29,7 +29,12 @@ services:
       - SPRING_CONFIG_LOCATION=optional:classpath:/;optional:classpath:/config/;optional:file:/app/config/
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
-      - TZ=Asia/Novosibirsk
+      - TZ=Europe/Moscow
+      - BAMBOO_API_URL=${BAMBOO_API_URL}
+      - BAMBOO_API_LOGIN=${BAMBOO_API_LOGIN}
+      - BAMBOO_API_PASSWORD=${BAMBOO_API_PASSWORD}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     volumes:
         - ./config:/app/config
     networks:
