@@ -1,0 +1,16 @@
+telegram:
+  api:
+    url: "mock://telegram-test"
+    chatId: -1002561756785
+
+pachka:
+  api:
+    url: "mock://pachka-test"
+    token: "test-token"
+    entity_id: "test-entity"
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379

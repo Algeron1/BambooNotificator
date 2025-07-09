@@ -10,7 +10,7 @@ services:
     networks:
       - notifier-network
     environment:
-      - TZ=Asia/Novosibirsk
+      - TZ=Europe/Moscow
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -30,11 +30,6 @@ services:
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - TZ=Europe/Moscow
-      - BAMBOO_API_URL=${BAMBOO_API_URL}
-      - BAMBOO_API_LOGIN=${BAMBOO_API_LOGIN}
-      - BAMBOO_API_PASSWORD=${BAMBOO_API_PASSWORD}
-      - ADMIN_USERNAME=${ADMIN_USERNAME}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     volumes:
         - ./config:/app/config
     networks:
