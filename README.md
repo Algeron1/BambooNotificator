@@ -21,6 +21,18 @@ git clone https://github.com/Algeron1/BambooNotificator.git
 cd BambooNotificator
 cp .env.example .env
 # Отредактируйте .env файл под свои настройки
+BAMBOO_API_URL=https://bamboo.server.ru/rest/api/latest/
+BAMBOO_API_LOGIN=bamboo username
+BAMBOO_API_PASSWORD=bamboo api password
+ADMIN_USERNAME=admin username
+ADMIN_PASSWORD=admin password
+TELEGRAM_API_URL=https://api.telegram.org/token/sendMessage
+TELEGRAM_CHAT_ID=chat id
+PACHKA_API_URL=https://api.pachca.com/api/shared/v1/messages/
+PACHKA_TOKEN=pachka token
+PACHKA_ENTITY_ID=pachka entity id
+REDIS_HOST=localhost
+REDIS_PORT=6379
 docker run -d --name redis -p 6379:6379 redis:7.2-alpine
 mvn clean package
 java -jar target/*.jar
