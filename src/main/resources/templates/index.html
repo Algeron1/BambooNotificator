@@ -1,148 +1,396 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RGS Bamboo Notifier</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔔</text></svg>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
+        :root {
+            --bg-primary: #f0f2f5;
+            --bg-card: #ffffff;
+            --bg-navbar: #ffffff;
+            --text-primary: #1a1d23;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-hover: 0 8px 24px rgba(0,0,0,0.12);
+            --radius: 12px;
+            --accent: #3b82f6;
+            --navbar-height: 57px;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #0f1117;
+            --bg-card: #1a1d2e;
+            --bg-navbar: #1a1d2e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3148;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-hover: 0 8px 24px rgba(0,0,0,0.4);
+        }
         body {
-            background-color: #f8f9fa;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            transition: background 0.3s, color 0.3s;
         }
 
-        .announcement-card {
-            border-radius: 0.75rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #212529;
-            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
-            border-left: 5px solid;
+        /* ── Navbar ── */
+        .app-navbar {
+            background: var(--bg-navbar);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.85rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            box-shadow: var(--shadow-sm);
         }
-
-        .announcement-info {
-            background-color: #e9f7ef;
-            border-color: #198754;
+        .navbar-brand-text { font-weight: 700; font-size: 1.05rem; color: var(--text-primary); }
+        .update-badge {
+            font-size: 0.72rem; color: var(--text-secondary);
+            display: flex; align-items: center; gap: 0.4rem; margin-top: 2px;
         }
-
-        .announcement-warning {
-            background-color: #fff3cd;
-            border-color: #ffc107;
+        .refresh-dot {
+            width: 6px; height: 6px; border-radius: 50%; background: #22c55e;
+            animation: pulse-dot 2s ease-in-out infinite;
         }
-
-        .announcement-critical {
-            background-color: #f8d7da;
-            border-color: #dc3545;
+        .theme-toggle {
+            background: none; border: 1px solid var(--border-color); color: var(--text-primary);
+            width: 34px; height: 34px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s;
         }
+        .theme-toggle:hover { background: var(--bg-primary); }
 
+        /* WS badge */
+        .ws-badge {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 0.72rem; color: var(--text-secondary);
+            padding: 0.2rem 0.6rem; border-radius: 999px;
+            border: 1px solid var(--border-color); background: var(--bg-primary);
+        }
+        .ws-dot { width: 6px; height: 6px; border-radius: 50%; background: #9ca3af; flex-shrink: 0; }
+        .ws-dot.connected  { background: #22c55e; }
+        .ws-dot.connecting { background: #f59e0b; animation: pulse-dot 1s infinite; }
+
+        /* ── Stand navigation bar ── */
+        .stand-nav {
+            background: var(--bg-navbar);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.5rem 0;
+            position: sticky;
+            top: var(--navbar-height);
+            z-index: 199;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .stand-nav::-webkit-scrollbar { display: none; }
+        .stand-nav .inner { display: flex; gap: 0.5rem; padding: 0 1rem; white-space: nowrap; }
+
+        .nav-stand-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+            background: var(--bg-primary); border: 1px solid var(--border-color);
+            color: var(--text-primary); cursor: pointer; transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .nav-stand-btn:hover { background: var(--border-color); }
+        .nav-stand-btn.has-ban { border-color: #f59e0b; }
+
+        /* ── Stand cards ── */
         .stand-card {
-            border: none;
-            border-radius: 1rem;
-            background-color: #fff;
-            box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: var(--radius); padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);
+            scroll-margin-top: calc(var(--navbar-height) + 48px);
         }
-
         .stand-header {
-            border-bottom: 3px solid #0d6efd;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 0.85rem; margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .stand-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+
+        /* Chevron toggle */
+        .btn-collapse { width: 32px; padding: 0; border-radius: 8px !important; }
+        .chevron { transition: transform 0.25s ease; }
+        .chevron.rotated { transform: rotate(-90deg); }
+
+        /* Collapsible body */
+        .stand-body {
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            max-height: 2000px;
+            opacity: 1;
+        }
+        .stand-body.collapsed { max-height: 0; opacity: 0; }
+
+        /* ── Deploy cards ── */
+        .deploy-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 10px; overflow: hidden;
+            transition: transform 0.18s, box-shadow 0.18s;
+            height: 100%;
+        }
+        .deploy-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+        .deploy-card-header {
+            padding: 0.6rem 1rem; font-weight: 600; font-size: 0.875rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .deploy-card-body { padding: 0.9rem 1rem; }
+
+        /* Status colours */
+        .status-success  .deploy-card-header { background: #dcfce7; color: #166534; }
+        .status-error    .deploy-card-header { background: #fee2e2; color: #991b1b; }
+        .status-progress .deploy-card-header { background: #fef9c3; color: #854d0e; }
+        .status-unknown  .deploy-card-header { background: #f3f4f6; color: #374151; }
+        [data-theme="dark"] .status-success  .deploy-card-header { background: #14532d; color: #86efac; }
+        [data-theme="dark"] .status-error    .deploy-card-header { background: #7f1d1d; color: #fca5a5; }
+        [data-theme="dark"] .status-progress .deploy-card-header { background: #713f12; color: #fde68a; }
+        [data-theme="dark"] .status-unknown  .deploy-card-header { background: #1f2937; color: #9ca3af; }
+
+        /* Status dot */
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+        .dot-success  { background: #22c55e; }
+        .dot-error    { background: #ef4444; }
+        .dot-unknown  { background: #9ca3af; }
+        .dot-progress { background: #f59e0b; animation: pulse-dot 1.4s ease-in-out infinite; }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.5; transform: scale(1.4); }
         }
 
-        .card-modern {
-            border: none;
-            border-radius: 0.75rem;
-            box-shadow: 0 0.125rem 0.75rem rgba(0, 0, 0, 0.08);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        /* Flash on WS update */
+        @keyframes card-flash {
+            0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+            40%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.4); }
+            100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
         }
+        .card-flash { animation: card-flash 0.7s ease-out; }
 
-        .card-modern:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.12);
+        /* Pulsing glow for in-progress deploy cards */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.55); border-color: #f59e0b; }
+            50%       { box-shadow: 0 0 0 6px rgba(245,158,11,0);   border-color: #fbbf24; }
         }
+        .status-progress .deploy-card { animation: pulse-glow 1.8s ease-in-out infinite; }
 
-        .bg-success-custom {
-            background-color: #d1e7dd !important;
-        }
+        /* History icon in card header */
+        .deploy-card-header { cursor: pointer; }
+        .deploy-card-header .history-icon { opacity: 0.3; transition: opacity 0.15s; flex-shrink: 0; }
+        .deploy-card-header:hover .history-icon { opacity: 0.85; }
 
-        .bg-error-custom {
-            background-color: #f8d7da !important;
-        }
-
-        .bg-unknown-custom {
-            background-color: #e2e3e5 !important;
-        }
-
-        .bg-in-progress-custom {
-            background-color: #fff3cd !important;
-        }
-
-
+        /* Status badge */
         .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.3em 0.7em;
-            border-radius: 1rem;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.67rem; font-weight: 700; letter-spacing: 0.03em;
+            padding: 0.18em 0.55em; border-radius: 999px; flex-shrink: 0;
+        }
+        .status-success  .status-badge { background: rgba(22,101,52,0.18);  color: #166534; }
+        .status-error    .status-badge { background: rgba(153,27,27,0.18);  color: #991b1b; }
+        .status-progress .status-badge { background: rgba(133,77,14,0.18);  color: #854d0e; }
+        .status-unknown  .status-badge { background: rgba(55,65,81,0.12);   color: #374151; }
+        [data-theme="dark"] .status-success  .status-badge { background: rgba(134,239,172,0.18); color: #86efac; }
+        [data-theme="dark"] .status-error    .status-badge { background: rgba(252,165,165,0.18); color: #fca5a5; }
+        [data-theme="dark"] .status-progress .status-badge { background: rgba(253,230,138,0.18); color: #fde68a; }
+        [data-theme="dark"] .status-unknown  .status-badge { background: rgba(156,163,175,0.12); color: #9ca3af; }
+
+        /* Code tag for version/branch */
+        .code-tag {
+            display: inline-block; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+            font-size: 0.72rem; padding: 0.1em 0.45em; border-radius: 5px;
+            background: var(--border-color); color: var(--text-primary);
+            max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; vertical-align: middle; line-height: 1.5;
+        }
+        [data-theme="dark"] .code-tag { background: #252840; }
+
+
+        /* Dark mode table */
+        [data-theme="dark"] .table { color: var(--text-primary); }
+        [data-theme="dark"] .table thead th { background: var(--bg-primary); color: var(--text-secondary); border-color: var(--border-color); }
+
+        /* Meta rows */
+        .meta-row { display: flex; gap: 0.4rem; margin-bottom: 0.35rem; font-size: 0.8rem; }
+        .meta-label { font-weight: 500; min-width: 64px; color: var(--text-secondary); flex-shrink: 0; }
+        .meta-value { color: var(--text-primary); word-break: break-word; }
+
+        /* Announcements */
+        .announcement-card {
+            border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.65rem;
+            border-left: 4px solid; display: flex; align-items: flex-start; gap: 0.65rem;
+        }
+        .ann-info     { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+        .ann-warning  { background: #fffbeb; border-color: #f59e0b; color: #92400e; }
+        .ann-critical { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+        [data-theme="dark"] .ann-info     { background: #1e3a5f; border-color: #60a5fa; color: #bfdbfe; }
+        [data-theme="dark"] .ann-warning  { background: #451a03; border-color: #fbbf24; color: #fde68a; }
+        [data-theme="dark"] .ann-critical { background: #450a0a; border-color: #f87171; color: #fecaca; }
+
+        /* Ban card */
+        .ban-card {
+            background: #fffbeb; border: 1px solid #fde68a;
+            border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.75rem;
+        }
+        [data-theme="dark"] .ban-card { background: #451a03; border-color: #92400e; }
+
+        /* Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--border-color) 25%, var(--bg-primary) 50%, var(--border-color) 75%);
+            background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Dark mode fixes */
+        [data-theme="dark"] .modal-content { background: var(--bg-card); color: var(--text-primary); }
+        [data-theme="dark"] .modal-header, [data-theme="dark"] .modal-footer { border-color: var(--border-color); }
+        [data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
+            background: #252840; color: var(--text-primary); border-color: var(--border-color);
+        }
+        [data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus {
+            background: #2d3158; color: var(--text-primary);
+        }
+        [data-theme="dark"] .btn-close { filter: invert(1); }
+        [data-theme="dark"] .text-muted { color: var(--text-secondary) !important; }
+
+        /* Auth navbar items */
+        .user-chip {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--bg-primary); border: 1px solid var(--border-color);
+            border-radius: 999px; padding: 0.25rem 0.75rem 0.25rem 0.35rem;
+            font-size: 0.8rem; font-weight: 600; color: var(--text-primary);
+        }
+        .user-avatar {
+            width: 26px; height: 26px; border-radius: 50%; background: var(--accent);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
         }
 
-        .alert-ban {
-            background-color: #fff8e1;
-            color: #7c5700;
-            border-left: 5px solid #ffc107;
-            border-radius: 0.75rem;
-            padding: 1rem;
-            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
+        /* Queue section */
+        .queue-item {
+            display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+            background: #fffbeb; border: 1px solid #fde68a;
+            border-radius: 8px; padding: 0.4rem 0.85rem; font-size: 0.8rem;
+            animation: pulse-dot 2s ease-in-out infinite;
         }
+        [data-theme="dark"] .queue-item { background: #451a03; border-color: #92400e; }
+        .queue-stand { font-weight: 700; color: var(--text-primary); }
+        .queue-sep { color: var(--border-color); }
 
-        .alert-ban:hover {
-            background-color: #fff3cd;
+        /* Comment section */
+        .comment-section { border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 0.75rem; }
+        .comment-toggle-btn {
+            background: none; border: none; color: var(--text-secondary); font-size: 0.8rem;
+            padding: 0; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
         }
+        .comment-toggle-btn:hover { color: var(--text-primary); }
+        .comment-item {
+            padding: 0.6rem 0.75rem; border-radius: 8px;
+            background: var(--bg-primary); margin-bottom: 0.5rem; font-size: 0.85rem;
+        }
+        .comment-author { font-weight: 600; font-size: 0.78rem; color: var(--accent); }
+        .comment-time { font-size: 0.72rem; color: var(--text-secondary); }
 
-        .alert-ban button {
-            background-color: #ffc107;
-            border: none;
-            color: #212529;
+        footer {
+            margin-top: 2rem; padding: 1.75rem 0;
+            border-top: 1px solid var(--border-color);
+            text-align: center; color: var(--text-secondary); font-size: 0.82rem;
         }
-
-        .alert-ban button:hover {
-            background-color: #ffca2c;
-        }
+        a { color: var(--accent); }
+        .gap-links a { text-decoration: none; }
+        .gap-links a:hover { text-decoration: underline; }
     </style>
 </head>
-<body class="p-4">
+<body>
 
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">📊 Состояние стендов</h1>
-        <button class="btn btn-success" onclick="location.href='/admin'">Режим админа</button>
+<!-- ── Main navbar ── -->
+<nav class="app-navbar">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <div class="navbar-brand-text">
+                <i class="bi bi-activity me-2 text-primary"></i>Bamboo Notifier
+            </div>
+            <div class="update-badge mt-1">
+                <span class="refresh-dot"></span>Живые обновления
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="ws-badge d-none d-sm-inline-flex">
+                <span class="ws-dot" id="wsDot"></span>
+                <span id="wsLabel">Подключение…</span>
+            </div>
+            <div id="authBlock">
+                <button class="btn btn-outline-secondary btn-sm" onclick="openAuthModal('login')" style="border-radius:8px;">
+                    <i class="bi bi-person me-1"></i>Войти
+                </button>
+            </div>
+            <button class="btn btn-outline-warning btn-sm" onclick="openBanModal()" style="border-radius:8px;">
+                <i class="bi bi-slash-circle me-1"></i>Не деплоить
+            </button>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">
+                <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+            </button>
+            <a href="#" onclick="goToAdmin(); return false;" class="btn btn-primary btn-sm" style="border-radius: 8px; padding: 0.35rem 0.85rem;">
+                <i class="bi bi-gear me-1"></i>Админ
+            </a>
+        </div>
     </div>
-    <h6 class="text-muted mb-4">Автообновление каждые 30 секунд</h6>
-    <div id="announcementBlock" class="mb-4"></div>
-    <div id="deploymentsList"></div>
+</nav>
+
+<!-- ── Stand navigation bar ── -->
+<div class="stand-nav" id="standNav" style="display:none;">
+    <div class="inner" id="navStands"></div>
 </div>
 
-<!-- Toast контейнер -->
+<!-- ── Main content ── -->
+<div class="container py-4">
+    <div id="announcementBlock" class="mb-3"></div>
+    <div id="queueBlock" class="mb-3" style="display:none;">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-hourglass-split text-warning"></i>
+            <span class="fw-semibold" style="font-size:0.875rem;">Ожидают деплоя</span>
+            <span class="badge bg-warning text-dark" id="queueCount">0</span>
+        </div>
+        <div id="queueItems" class="d-flex flex-wrap gap-2"></div>
+    </div>
+    <div id="deploymentsList">
+        <div class="stand-card">
+            <div class="skeleton mb-3" style="width: 100px; height: 20px;"></div>
+            <div class="row gy-3">
+                <div class="col-md-4"><div class="skeleton" style="height: 150px;"></div></div>
+                <div class="col-md-4"><div class="skeleton" style="height: 150px;"></div></div>
+                <div class="col-md-4"><div class="skeleton" style="height: 150px;"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
     <div id="toastContainer"></div>
 </div>
 
-<!-- Модалка для бана -->
+<!-- Ban modal -->
 <div class="modal fade" id="banModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Просьба не деплоить</h5>
+                <h5 class="modal-title"><i class="bi bi-slash-circle me-2 text-warning"></i>Просьба не деплоить</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="banStandName">
                 <div class="mb-3">
-                    <label class="form-label">Причина</label>
+                    <label class="form-label fw-semibold">Стенд</label>
+                    <select class="form-select" id="banStandSelect">
+                        <option value="">Выберите стенд</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Причина</label>
                     <select class="form-select" id="banReasonSelect" onchange="handleReasonChange()">
                         <option value="">Выберите причину</option>
                         <option value="Проведение демо">Проведение демо</option>
@@ -150,192 +398,708 @@
                         <option value="Регресс">Регресс</option>
                         <option value="Иное">Иное</option>
                     </select>
-                    <input type="text" class="form-control mt-2 d-none" id="banReasonCustom"
-                           placeholder="Укажите свою причину">
+                    <input type="text" class="form-control mt-2 d-none" id="banReasonCustom" placeholder="Укажите свою причину">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Автор</label>
-                    <input type="text" class="form-control" id="banAuthor">
+                    <label class="form-label fw-semibold">Автор</label>
+                    <input type="text" class="form-control" id="banAuthor" placeholder="Ваше имя">
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col">
+                        <label class="form-label fw-semibold">С</label>
+                        <input type="datetime-local" class="form-control" id="banFrom">
+                    </div>
+                    <div class="col">
+                        <label class="form-label fw-semibold">По</label>
+                        <input type="datetime-local" class="form-control" id="banTo">
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">С (дата и время)</label>
-                    <input type="datetime-local" class="form-control" id="banFrom">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">По (дата и время)</label>
-                    <input type="datetime-local" class="form-control" id="banTo">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Пин-код (4 цифры)</label>
-                    <input type="password" class="form-control" id="banPinCode" maxlength="4"
-                           placeholder="Например: 1234">
+                    <label class="form-label fw-semibold">Пин-код (4 цифры)</label>
+                    <input type="password" class="form-control" id="banPinCode" maxlength="4" placeholder="••••">
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" onclick="saveBan()">Сохранить</button>
+                <button type="button" class="btn btn-warning" onclick="saveBan()">
+                    <i class="bi bi-slash-circle me-1"></i>Установить запрет
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Модалка для снятия бана -->
-<div class="modal fade" id="removeBanModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- Auth modal -->
+<div class="modal fade" id="authModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <ul class="nav nav-tabs border-0 gap-2" id="authTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active px-3 py-1" id="tabLoginBtn" onclick="switchAuthTab('login')">Войти</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link px-3 py-1" id="tabRegBtn" onclick="switchAuthTab('register')">Регистрация</button>
+                    </li>
+                </ul>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Login form -->
+                <div id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Логин</label>
+                        <input type="text" class="form-control" id="loginUsername" placeholder="Ваш логин">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Пароль</label>
+                        <input type="password" class="form-control" id="loginPassword" placeholder="••••••••"
+                               onkeydown="if(event.key==='Enter')doLogin()">
+                    </div>
+                    <div id="loginError" class="text-danger small mb-2"></div>
+                    <button class="btn btn-primary w-100" onclick="doLogin()">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Войти
+                    </button>
+                </div>
+                <!-- Register form -->
+                <div id="registerForm" style="display:none;">
+                    <div class="row g-2 mb-2">
+                        <div class="col">
+                            <label class="form-label fw-semibold">Имя</label>
+                            <input type="text" class="form-control" id="regFirstName" placeholder="Иван">
+                        </div>
+                        <div class="col">
+                            <label class="form-label fw-semibold">Фамилия</label>
+                            <input type="text" class="form-control" id="regLastName" placeholder="Петров">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">Логин</label>
+                        <input type="text" class="form-control" id="regUsername" placeholder="ivan.petrov">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">Пароль</label>
+                        <input type="password" class="form-control" id="regPassword" placeholder="Минимум 4 символа">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="regRequestAdmin">
+                            <label class="form-check-label" for="regRequestAdmin" style="font-size:0.85rem;">
+                                Запросить права администратора
+                            </label>
+                        </div>
+                    </div>
+                    <div id="regError" class="text-danger small mb-2"></div>
+                    <button class="btn btn-primary w-100" onclick="doRegister()">
+                        <i class="bi bi-person-plus me-1"></i>Зарегистрироваться
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History modal -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Введите пин-код для снятия бана</h5>
+                <h5 class="modal-title"><i class="bi bi-clock-history me-2 text-primary"></i><span id="historyModalTitle">История деплоев</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" id="historyModalBody" style="min-height:120px;">
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm me-2"></div>Загрузка...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bug report modal -->
+<div class="modal fade" id="bugReportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0 fw-semibold"><i class="bi bi-bug me-2 text-danger"></i>Сообщить об ошибке</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="removeBanId">
-                <input type="password" id="removeBanPinCode" maxlength="4" class="form-control" placeholder="4 цифры">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Краткое описание <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="bugReportTitle" placeholder="Что пошло не так?" maxlength="200">
+                </div>
+                <div class="mb-1">
+                    <label class="form-label fw-semibold">Подробности <span class="text-muted fw-normal">(необязательно)</span></label>
+                    <textarea class="form-control" id="bugReportDescription" rows="4"
+                              placeholder="Шаги для воспроизведения, ожидаемое и фактическое поведение..." maxlength="2000"></textarea>
+                </div>
+                <div id="bugReportError" class="text-danger small mt-2"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-danger" onclick="confirmRemoveBan()">Снять запрет</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="bugReportSubmitBtn" onclick="submitBugReport()">
+                    <i class="bi bi-send me-1"></i>Отправить
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Remove ban modal -->
+<div class="modal fade" id="removeBanModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Снять запрет</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Введите пин-код для подтверждения</p>
+                <input type="hidden" id="removeBanId">
+                <input type="password" id="removeBanPinCode" maxlength="4" class="form-control text-center"
+                       placeholder="••••" style="font-size: 1.4rem; letter-spacing: 0.5rem;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="confirmRemoveBan()">Снять</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="announcementModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-megaphone me-2 text-primary"></i>Создать объявление</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Уровень</label>
+                    <select id="annLevel" class="form-select">
+                        <option value="INFO">Информация</option>
+                        <option value="WARNING">Предупреждение</option>
+                        <option value="CRITICAL">Критическое</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Текст объявления</label>
+                    <textarea class="form-control" id="annText" rows="3" placeholder="Введите текст..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Действует до</label>
+                    <input type="datetime-local" id="annExpires" class="form-control">
+                </div>
+                <div id="annError" class="text-danger small mt-1"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="annSubmitBtn" onclick="submitAnnouncement()">
+                    <i class="bi bi-send me-1"></i>Опубликовать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <a href="mailto:eduard_yadigarov@rgs.ru?subject=Предложение%2FЗамечание&body=Здравствуйте%2C%20хочу%20поделиться%3A"
+           class="btn btn-outline-secondary btn-sm mb-3" style="border-radius:999px; font-size:0.8rem;">
+            <i class="bi bi-envelope me-1"></i>Отправить предложение или замечание
+        </a>
+        <div class="d-flex justify-content-center gap-3 gap-links mb-2">
+            <a href="mailto:eduard_yadigarov@rgs.ru"><i class="bi bi-envelope me-1"></i>Почта</a>
+            <a href="https://t.me/eduard_iadigarov" target="_blank"><i class="bi bi-telegram me-1"></i>Telegram</a>
+            <a href="https://vk.com/id13450731" target="_blank"><i class="bi bi-vk me-1"></i>VK</a>
+        </div>
+        <div class="d-flex justify-content-center gap-3 gap-links">
+            <a href="https://t.me/+U-qA4hKIGVk2ODcy" target="_blank">Канал Telegram</a>
+            <a href="https://app.pachca.com/chats/26092493" target="_blank">Канал Пачка</a>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+
 <script>
+    /* ── Theme ── */
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.getElementById('themeIcon').className = isDark ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    }
+    (function () {
+        const saved = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', saved);
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('themeIcon').className =
+                saved === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+        });
+    })();
+
+    /* ── WebSocket ── */
+    function connectWebSocket() {
+        setWsStatus('connecting');
+        const client = new StompJs.Client({
+            webSocketFactory: () => new SockJS('/ws'),
+            reconnectDelay: 5000,
+            debug: () => {},
+            onConnect: () => {
+                setWsStatus('connected');
+                client.subscribe('/topic/deployments', msg => {
+                    updateDeployCard(JSON.parse(msg.body));
+                });
+            },
+            onDisconnect: () => setWsStatus('disconnected'),
+            onStompError:  () => setWsStatus('disconnected'),
+        });
+        client.activate();
+    }
+
+    function setWsStatus(status) {
+        const dot   = document.getElementById('wsDot');
+        const label = document.getElementById('wsLabel');
+        const map   = { connected: ['connected', 'Подключено'], connecting: ['connecting', 'Подключение…'], disconnected: ['', 'Отключено'] };
+        const [cls, text] = map[status] || ['', status];
+        dot.className   = 'ws-dot ' + cls;
+        label.textContent = text;
+    }
+
+    /* ── Collapse ── */
+    function toggleStand(standName) {
+        const body    = document.getElementById('stand-body-' + standName);
+        const chevron = document.getElementById('chevron-' + standName);
+        const nowCollapsed = !body.classList.contains('collapsed');
+        body.classList.toggle('collapsed', nowCollapsed);
+        chevron.classList.toggle('rotated', nowCollapsed);
+        const state = JSON.parse(localStorage.getItem('collapsedStands') || '{}');
+        state[standName] = nowCollapsed;
+        localStorage.setItem('collapsedStands', JSON.stringify(state));
+    }
+
+    /* ── Navigation ── */
+    function scrollToStand(standName) {
+        document.getElementById('stand-' + standName)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function worstStatus(deploys) {
+        if (deploys.some(d => d.progressStatus === 'IN_PROGRESS')) return 'progress';
+        if (deploys.some(d => d.status === 'ERROR'))               return 'error';
+        if (deploys.every(d => d.status === 'SUCCESS'))            return 'success';
+        return 'unknown';
+    }
+
+    function refreshNavDot(standName) {
+        const cards  = [...document.querySelectorAll(`[data-stand-group="${standName}"]`)];
+        const status = cards.some(c => c.classList.contains('status-progress')) ? 'progress'
+                     : cards.some(c => c.classList.contains('status-error'))    ? 'error'
+                     : cards.every(c => c.classList.contains('status-success')) ? 'success'
+                     : 'unknown';
+        const dot = document.getElementById('nav-dot-' + standName);
+        if (dot) dot.className = `status-dot dot-${status}`;
+    }
+
+    /* ── Card HTML builders ── */
+    function statusClass(d) {
+        if (d.progressStatus === 'IN_PROGRESS') return 'status-progress';
+        if (d.status === 'SUCCESS') return 'status-success';
+        if (d.status === 'ERROR')   return 'status-error';
+        return 'status-unknown';
+    }
+
+    function dotClass(d) {
+        if (d.progressStatus === 'IN_PROGRESS') return 'dot-progress';
+        if (d.status === 'SUCCESS') return 'dot-success';
+        if (d.status === 'ERROR')   return 'dot-error';
+        return 'dot-unknown';
+    }
+
+    function cardHeaderHtml(d, system) {
+        const spinner = d.progressStatus === 'IN_PROGRESS'
+            ? '<span class="spinner-border" style="width:12px;height:12px;border-width:2px;flex-shrink:0;"></span>' : '';
+        const label = d.progressStatus === 'IN_PROGRESS' ? 'В процессе'
+            : d.progressStatus === 'QUEUED' ? 'В очереди'
+            : d.status === 'SUCCESS' ? 'Успешно'
+            : d.status === 'ERROR'   ? 'Ошибка'
+            : d.status || '—';
+        return `<span class="status-dot ${dotClass(d)}"></span><span class="text-truncate flex-grow-1">${system}</span>${spinner}<span class="status-badge">${label}</span><i class="bi bi-clock-history history-icon ms-1" style="font-size:0.8rem;" title="История деплоев"></i>`;
+    }
+
+    function cardBodyHtml(d) {
+        const agoHtml = d.lastUpdated
+            ? `<div class="meta-row mt-1 pt-1" style="border-top:1px solid var(--border-color);">
+                   <span class="meta-label" style="font-size:0.72rem;color:var(--text-secondary);">обновлено</span>
+                   <span class="meta-value time-ago-label" style="font-size:0.72rem;color:var(--text-secondary);">${timeAgo(d.lastUpdated)}</span>
+               </div>` : '';
+
+        let buildHtml = '';
+        if (d.buildState) {
+            const ok = d.buildState === 'Successful';
+            const icon = ok ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger';
+            const label = ok ? 'Успешный' : d.buildState === 'Failed' ? 'Ошибка' : d.buildState;
+            const tests = (d.testsPassed || d.testsFailed)
+                ? ` <span style="font-size:0.72rem;color:var(--text-secondary);">${d.testsPassed}✓ ${d.testsFailed}✗</span>` : '';
+            buildHtml = `<div class="meta-row"><span class="meta-label">Билд</span><span class="meta-value"><i class="bi ${icon}" style="font-size:0.75rem;"></i> ${label}${tests}</span></div>`;
+        }
+
+        const triggerHtml = d.triggerType ? (() => {
+            const map = {
+                MANUAL:    ['bi-person',       'Вручную'],
+                SCHEDULED: ['bi-clock',        'По расписанию'],
+                CHILD:     ['bi-robot',         'Автодеплой'],
+            };
+            const [icon, label] = map[d.triggerType] || ['bi-question', d.triggerType];
+            return `<div class="meta-row"><span class="meta-label">Запуск</span><span class="meta-value"><i class="bi ${icon} me-1" style="font-size:0.75rem;"></i>${label}</span></div>`;
+        })() : '';
+
+        return `
+            <div class="meta-row"><span class="meta-label">Бранч</span><span class="meta-value">${d.branchName ? `<span class="code-tag">${d.branchName}</span>` : '—'}</span></div>
+            <div class="meta-row"><span class="meta-label">Версия</span><span class="meta-value">${d.deployVersion ? `<span class="code-tag">${d.deployVersion}</span>` : '—'}</span></div>
+            <div class="meta-row"><span class="meta-label">Начало</span><span class="meta-value">${d.startedDate || '—'}</span></div>
+            <div class="meta-row"><span class="meta-label">Длит.</span><span class="meta-value">${d.duration || '—'}</span></div>
+            <div class="meta-row"><span class="meta-label">Автор</span><span class="meta-value">${d.author || '—'}</span></div>
+            ${triggerHtml}${buildHtml}${agoHtml}`;
+    }
+
+    /* ── WebSocket card update ── */
+    function updateDeployCard(update) {
+        const envId = update.environmentId;  // e.g. "TST01_Billing Center"
+        const card  = document.querySelector(`[data-env-id="${CSS.escape(envId)}"]`);
+        if (!card) {
+            fetchDeployments().then(reloadComments);
+            return;
+        }
+
+        const system = envId.split('_').slice(1).join(' ');
+        card.className = `deploy-card ${statusClass(update)}`;
+        if (update.lastUpdated) card.setAttribute('data-last-updated', update.lastUpdated);
+        card.querySelector('.deploy-card-header').innerHTML = cardHeaderHtml(update, system);
+        card.querySelector('.deploy-card-body').innerHTML   = cardBodyHtml(update);
+
+        if (!card.classList.contains('status-progress')) {
+            card.classList.add('card-flash');
+            card.addEventListener('animationend', () => card.classList.remove('card-flash'), { once: true });
+        }
+
+        refreshNavDot(envId.split('_')[0]);
+        checkTabTitle();
+    }
+
+    /* ── Full render ── */
     async function fetchDeployments() {
-        const response = await fetch('/deployments');
-        const data = await response.json();
-        const deployments = data.deployments;
-        const deployBanMessages = data.deployBans;
-        const announcements = data.announcementMessageInfos || [];
-
-        const announcementContainer = document.getElementById('announcementBlock');
-        announcementContainer.innerHTML = '';
-
-        announcements.forEach(ann => {
-            let levelClass = 'announcement-info';
-            if (ann.warningLevel === 'WARNING') levelClass = 'announcement-warning';
-            if (ann.warningLevel === 'CRITICAL') levelClass = 'announcement-critical';
-            if (ann.warningLevel === 'INFO') levelClass = 'announcement-info';
-
-            const announcementHtml = `
-      <div class="announcement-card ${levelClass}">
-        <strong>${ann.author}</strong> | Актуально до: ${new Date(ann.to).toLocaleString()}<br>
-        <div class="mt-2">${ann.text}</div>
-      </div>
-    `;
-
-            announcementContainer.insertAdjacentHTML('beforeend', announcementHtml);
+        const data = await fetch('/deployments').then(r => r.json());
+        renderAnnouncements(data.announcementMessageInfos || []);
+        renderQueue(data.queueItems || []);
+        const savedComments = {};
+        standNames.forEach(s => {
+            const el = document.getElementById('comment-body-' + s);
+            if (el) savedComments[s] = el.innerHTML;
         });
-
-        const grouped = {};
-        deployments.forEach(deploy => {
-            const envParts = deploy.environmentId.split("_");
-            const stand = envParts[0];
-            const system = envParts.slice(1).join("_");
-            if (!grouped[stand]) grouped[stand] = [];
-            grouped[stand].push({...deploy, system});
+        renderStands(data.deployments, data.deployBans || []);
+        standNames.forEach(s => {
+            const el = document.getElementById('comment-body-' + s);
+            if (el && savedComments[s] !== undefined) el.innerHTML = savedComments[s];
         });
+    }
 
-        const container = document.getElementById('deploymentsList');
+    function renderQueue(items) {
+        const block  = document.getElementById('queueBlock');
+        const list   = document.getElementById('queueItems');
+        const badge  = document.getElementById('queueCount');
+        if (!items.length) { block.style.display = 'none'; return; }
+        block.style.display = '';
+        badge.textContent = items.length;
+        list.innerHTML = items.map(q => `
+            <div class="queue-item" title="Ожидает деплоя">
+                <i class="bi bi-hourglass-split text-warning" style="font-size:0.8rem;"></i>
+                <span class="queue-stand">${q.standName}</span>
+                <span class="queue-sep">·</span>
+                <span class="text-secondary">${q.systemName || '—'}</span>
+                <span class="queue-sep">·</span>
+                <span class="text-muted">${q.version || '—'}</span>
+                ${q.author ? `<span class="queue-sep">·</span><span class="text-muted">${q.author}</span>` : ''}
+            </div>`).join('');
+    }
+
+    function renderAnnouncements(announcements) {
+        const container = document.getElementById('announcementBlock');
         container.innerHTML = '';
+        const isAdmin = currentUser && currentUser.role === 'ADMIN';
+        announcements.forEach(ann => {
+            let cls = 'ann-info', icon = 'bi-info-circle-fill';
+            if (ann.warningLevel === 'WARNING')  { cls = 'ann-warning';  icon = 'bi-exclamation-triangle-fill'; }
+            if (ann.warningLevel === 'CRITICAL') { cls = 'ann-critical'; icon = 'bi-exclamation-octagon-fill'; }
+            const delBtn = isAdmin
+                ? `<button class="btn btn-sm btn-outline-danger py-0 px-2 ms-auto flex-shrink-0" onclick="deleteAnnouncement('${ann.id}')" style="border-radius:6px;" title="Удалить"><i class="bi bi-trash"></i></button>`
+                : '';
+            container.insertAdjacentHTML('beforeend', `
+            <div class="announcement-card ${cls}">
+                <i class="bi ${icon} flex-shrink-0 mt-1"></i>
+                <div class="flex-grow-1">
+                    <span class="fw-semibold">${ann.author}</span>
+                    <span class="opacity-75" style="font-size:0.82rem;"> · до ${new Date(ann.to).toLocaleString('ru')}</span>
+                    <div class="mt-1" style="font-size:0.875rem;">${linkify(ann.text)}</div>
+                </div>
+                ${delBtn}
+            </div>`);
+        });
+    }
+
+    function openAnnouncementModal() {
+        document.getElementById('annText').value = '';
+        document.getElementById('annExpires').value = '';
+        document.getElementById('annLevel').value = 'INFO';
+        document.getElementById('annError').textContent = '';
+        new bootstrap.Modal(document.getElementById('announcementModal')).show();
+    }
+
+    async function submitAnnouncement() {
+        const text    = document.getElementById('annText').value.trim();
+        const level   = document.getElementById('annLevel').value;
+        const expires = document.getElementById('annExpires').value;
+        const errEl   = document.getElementById('annError');
+        const btn     = document.getElementById('annSubmitBtn');
+
+        if (!text) { errEl.textContent = 'Введите текст объявления'; return; }
+        errEl.textContent = '';
+        btn.disabled = true;
+        const toValue = expires || (() => {
+            const d = new Date(Date.now() + 86400000);
+            return d.toISOString().slice(0, 16);
+        })();
+        try {
+            const author = currentUser.firstName + ' ' + currentUser.lastName;
+            const resp = await fetch('/admin/announcement', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ text, author, warningLevel: level, to: toValue })
+            });
+            if (resp.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('announcementModal')).hide();
+                await fetchDeployments();
+            } else {
+                errEl.textContent = await resp.text();
+            }
+        } finally { btn.disabled = false; }
+    }
+
+    async function deleteAnnouncement(id) {
+        if (!confirm('Удалить объявление?')) return;
+        await fetch(`/admin/announcement/${id}`, { method: 'DELETE' });
+        await fetchDeployments();
+    }
+
+    function renderStands(deployments, bans) {
+        /* group by stand */
+        const grouped = {};
+        deployments.forEach(d => {
+            const parts = d.environmentId.split('_');
+            const stand = parts[0];
+            if (!grouped[stand]) grouped[stand] = [];
+            grouped[stand].push({ ...d, system: parts.slice(1).join(' ') });
+        });
+
+        /* nav bar */
+        const navEl = document.getElementById('navStands');
+        navEl.innerHTML = '';
+        document.getElementById('standNav').style.display = '';
 
         for (const [standName, deploys] of Object.entries(grouped)) {
-            const standCard = document.createElement('div');
-            standCard.className = 'stand-card';
+            const hasBan = bans.some(b => b.standName === standName);
+            navEl.insertAdjacentHTML('beforeend', `
+            <button class="nav-stand-btn${hasBan ? ' has-ban' : ''}" onclick="scrollToStand('${standName}')">
+                <span class="status-dot dot-${worstStatus(deploys)}" id="nav-dot-${standName}"></span>
+                ${standName}${hasBan ? ' <i class="bi bi-slash-circle" style="font-size:0.65rem;color:#f59e0b;"></i>' : ''}
+            </button>`);
+        }
 
-            const bans = deployBanMessages.filter(b => b.standName === standName);
-            let banBlock = '';
+        /* stand cards */
+        const container = document.getElementById('deploymentsList');
+        container.innerHTML = '';
+        const collapsed = JSON.parse(localStorage.getItem('collapsedStands') || '{}');
 
-            if (bans.length > 0) {
-                bans.forEach(ban => {
-                    banBlock += `
-        <div class="alert-ban mb-3">
-          🚫 <strong>Просьба не деплоить c ${new Date(ban.from).toLocaleString()} до ${new Date(ban.to).toLocaleString()}</strong><br>
-          📌 Причина: <strong>${ban.reason}</strong><br>
-          👨‍💻 Автор: <strong>${ban.author}</strong><br>
-          <button class="btn btn-sm mt-2" onclick="openRemoveBanModal('${ban.id}')">Снять запрет</button>
-        </div>`;
-                });
-            }
+        for (const [standName, deploys] of Object.entries(grouped)) {
+            const isCollapsed = collapsed[standName] === true;
+            const standBans   = bans.filter(b => b.standName === standName);
 
-
-            standCard.innerHTML = `
-        <div class="stand-header">
-          <h3 class="mb-0">${standName}</h3>
-          <button class="btn btn-primary btn-sm" onclick="openBanModal('${standName}')">Просьба не деплоить</button>
-        </div>
-        ${banBlock}
-        <div class="row gy-3"></div>
-      `;
-
-            const row = standCard.querySelector('.row');
-            deploys.forEach(deploy => {
-                let statusText = deploy.status;
-                let statusClass = 'bg-unknown-custom';
-                if (deploy.progressStatus === 'IN_PROGRESS') {
-                    statusText = 'Идёт деплой <span class="spinner-border spinner-border-sm ms-1"></span>';
-                    statusClass = 'bg-in-progress-custom';
-                } else {
-                    if (deploy.status === 'SUCCESS') statusClass = 'bg-success-custom';
-                    if (deploy.status === 'ERROR') statusClass = 'bg-error-custom';
-                    if (deploy.status === 'UNKNOWN') statusClass = 'bg-unknown-custom';
-                }
-
-                const cardCol = document.createElement('div');
-                cardCol.className = 'col-12 col-md-6 col-lg-4';
-                cardCol.innerHTML = `
-          <div class="card card-modern h-100 ${statusClass}">
-            <div class="card-body">
-              <h5 class="card-title">${deploy.system}</h5>
-              <p><strong>Бранч:</strong> ${deploy.branchName}</p>
-              <p><strong>Версия:</strong> ${deploy.deployVersion}</p>
-              <p><strong>Начало:</strong> ${deploy.startedDate || '-'}</p>
-              <p><strong>Завершение:</strong> ${deploy.finishedDate || '-'}</p>
-              <p><strong>Автор:</strong> ${deploy.author || '-'}</p>
-              <p><strong>Статус:</strong> <span class="status-badge">${statusText}</span></p>
-            </div>
-          </div>
-        `;
-                row.appendChild(cardCol);
+            let banHtml = '';
+            standBans.forEach(ban => {
+                banHtml += `
+                <div class="ban-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold mb-1" style="font-size:0.875rem;">
+                                <i class="bi bi-slash-circle text-warning me-1"></i>
+                                Просьба не деплоить
+                                с&nbsp;${new Date(ban.from).toLocaleString('ru')}
+                                до&nbsp;${new Date(ban.to).toLocaleString('ru')}
+                            </div>
+                            <div class="text-muted" style="font-size:0.78rem;">
+                                <i class="bi bi-chat-text me-1"></i>${ban.reason}
+                                &nbsp;·&nbsp;<i class="bi bi-person me-1"></i>${ban.author}
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-warning btn-sm ms-2 flex-shrink-0"
+                                onclick="openRemoveBanModal('${ban.id}')" title="Снять запрет">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>`;
             });
 
-            container.appendChild(standCard);
+            let cardsHtml = '';
+            deploys.forEach(d => {
+                cardsHtml += `
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="deploy-card ${statusClass(d)}" data-env-id="${d.environmentId}" data-stand-group="${standName}"${d.lastUpdated ? ` data-last-updated="${d.lastUpdated}"` : ''}>
+                        <div class="deploy-card-header" onclick="openHistoryModal(this.closest('.deploy-card').dataset.envId)">${cardHeaderHtml(d, d.system)}</div>
+                        <div class="deploy-card-body">${cardBodyHtml(d)}</div>
+                    </div>
+                </div>`;
+            });
+
+            container.insertAdjacentHTML('beforeend', `
+            <div class="stand-card" id="stand-${standName}">
+                <div class="stand-header">
+                    <span class="stand-title"><i class="bi bi-server me-2 text-primary"></i>${standName}</span>
+                    <div class="d-flex gap-2 align-items-center">
+                        <button class="btn btn-outline-secondary btn-sm btn-collapse"
+                                onclick="toggleStand('${standName}')" title="Свернуть / развернуть">
+                            <i class="bi bi-chevron-up chevron${isCollapsed ? ' rotated' : ''}" id="chevron-${standName}"></i>
+                        </button>
+                    </div>
+                </div>
+                ${banHtml}
+                <div id="stand-body-${standName}" class="stand-body${isCollapsed ? ' collapsed' : ''}">
+                    <div class="row gy-3">${cardsHtml}</div>
+                </div>
+                <div class="comment-section">
+                    <button class="comment-toggle-btn" onclick="toggleComments('${standName}')">
+                        <i class="bi bi-chat-text"></i>
+                        <span id="comment-label-${standName}">Комментарии</span>
+                        <i class="bi bi-chevron-up" id="comment-chevron-${standName}" style="font-size:0.65rem;"></i>
+                    </button>
+                    <div id="comment-body-${standName}" style="margin-top:0.75rem;"></div>
+                </div>
+            </div>`);
+        }
+        standNames = Object.keys(grouped);
+        standNames.forEach(s => openCommentSections.add(s));
+        checkTabTitle();
+    }
+
+    /* ── Time ago ── */
+    function timeAgo(epochMs) {
+        if (!epochMs) return '—';
+        const diff = Math.floor((Date.now() - epochMs) / 1000);
+        if (diff < 60)    return 'только что';
+        if (diff < 3600)  return Math.floor(diff / 60) + ' мин назад';
+        if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+        return Math.floor(diff / 86400) + ' дн назад';
+    }
+
+    function refreshTimeAgo() {
+        document.querySelectorAll('.deploy-card[data-last-updated]').forEach(card => {
+            const label = card.querySelector('.time-ago-label');
+            if (label) label.textContent = timeAgo(parseInt(card.dataset.lastUpdated));
+        });
+    }
+
+    /* ── History modal ── */
+    async function openHistoryModal(envId) {
+        if (!envId) return;
+        const system = envId.split('_').slice(1).join(' ');
+        const stand  = envId.split('_')[0];
+        document.getElementById('historyModalTitle').textContent = `${system} (${stand})`;
+        document.getElementById('historyModalBody').innerHTML =
+            '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>Загрузка...</div>';
+        new bootstrap.Modal(document.getElementById('historyModal')).show();
+
+        try {
+            const resp    = await fetch('/deployments/history?stand=' + encodeURIComponent(envId));
+            const history = await resp.json();
+            if (!history.length) {
+                document.getElementById('historyModalBody').innerHTML =
+                    '<div class="text-center text-muted py-4">История пуста — записи появятся после первого изменения статуса</div>';
+                return;
+            }
+            const stateHtml = s => s === 'SUCCESS' ? `<span class="text-success fw-semibold">${s}</span>`
+                                 : s === 'ERROR'   ? `<span class="text-danger fw-semibold">${s}</span>`
+                                 : `<span class="text-warning fw-semibold">${s || '—'}</span>`;
+            const rows = history.map(e => `
+                <tr>
+                    <td class="text-muted small">${new Date(e.timestamp).toLocaleString('ru')}</td>
+                    <td>${stateHtml(e.state)}</td>
+                    <td class="small text-muted">${e.lifeCycleState || '—'}</td>
+                    <td class="small text-truncate" style="max-width:140px;" title="${e.version || ''}">${e.version || '—'}</td>
+                    <td class="small text-truncate" style="max-width:120px;" title="${e.branch || ''}">${e.branch || '—'}</td>
+                    <td class="small">${e.author || '—'}</td>
+                </tr>`).join('');
+            document.getElementById('historyModalBody').innerHTML = `
+                <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead><tr>
+                        <th>Время</th><th>Статус</th><th>Цикл</th><th>Версия</th><th>Бранч</th><th>Автор</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table></div>`;
+        } catch {
+            document.getElementById('historyModalBody').innerHTML =
+                '<div class="text-center text-danger py-4">Ошибка загрузки истории</div>';
         }
     }
 
-    function openBanModal(standName) {
-        document.getElementById('banStandName').value = standName;
+    /* ── Tab title ── */
+    function checkTabTitle() {
+        const errors   = document.querySelectorAll('.deploy-card.status-error').length;
+        const progress = document.querySelectorAll('.deploy-card.status-progress').length;
+        if (errors)        document.title = `⚠️ Ошибок: ${errors} — Bamboo Notifier`;
+        else if (progress) document.title = `🔄 Деплой (${progress}) — Bamboo Notifier`;
+        else               document.title = 'RGS Bamboo Notifier';
+    }
+
+    /* ── Ban actions ── */
+    function openBanModal(preselect) {
+        const sel = document.getElementById('banStandSelect');
+        sel.innerHTML = '<option value="">Выберите стенд</option>' +
+            standNames.map(s => `<option value="${s}"${s === preselect ? ' selected' : ''}>${s}</option>`).join('');
+        const authorInput = document.getElementById('banAuthor');
+        if (currentUser) authorInput.value = currentUser.firstName + ' ' + currentUser.lastName;
         new bootstrap.Modal(document.getElementById('banModal')).show();
     }
 
     async function saveBan() {
-        const standName = document.getElementById('banStandName').value;
+        const standName    = document.getElementById('banStandSelect').value;
         const reasonSelect = document.getElementById('banReasonSelect').value;
         const customReason = document.getElementById('banReasonCustom').value;
-        const author = document.getElementById('banAuthor').value;
-        const from = document.getElementById('banFrom').value;
-        const to = document.getElementById('banTo').value;
-        const pinCode = document.getElementById('banPinCode').value;
-
-        const reason = reasonSelect === 'Иное' ? customReason : reasonSelect;
+        const author       = document.getElementById('banAuthor').value;
+        const from         = document.getElementById('banFrom').value;
+        const to           = document.getElementById('banTo').value;
+        const pinCode      = document.getElementById('banPinCode').value;
+        const reason       = reasonSelect === 'Иное' ? customReason : reasonSelect;
 
         if (!reason || !author || !from || !to || !/^\d{4}$/.test(pinCode)) {
-            alert("Пожалуйста, заполните все поля и введите корректный 4-значный пин-код");
+            showToast('Заполните все поля и введите корректный 4-значный пин-код', 'warning');
             return;
         }
-
         const response = await fetch('/deploy-ban', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({standName, reason, author, from, to, pinCode})
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ standName, reason, author, from, to, pinCode })
         });
-
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('banModal')).hide();
             fetchDeployments();
-            showToast("Бан успешно установлен", 'success');
+            showToast('Запрет установлен', 'success');
         } else {
-            const error = await response.text();
-            showToast(error || "Ошибка при установке бана", 'danger');
+            showToast(await response.text() || 'Ошибка при установке запрета', 'danger');
         }
     }
 
@@ -346,46 +1110,27 @@
     }
 
     async function confirmRemoveBan() {
-        const banId = document.getElementById('removeBanId').value;
+        const banId   = document.getElementById('removeBanId').value;
         const pinCode = document.getElementById('removeBanPinCode').value;
-
         if (!/^\d{4}$/.test(pinCode)) {
-            showToast("Введите корректный 4-значный пин-код", 'warning');
+            showToast('Введите корректный 4-значный пин-код', 'warning');
             return;
         }
-
         const response = await fetch(`/deploy-ban/${banId}`, {
-            method: 'DELETE',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({pinCode})
+            method: 'DELETE', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ pinCode })
         });
-
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('removeBanModal')).hide();
             fetchDeployments();
-            showToast("Бан успешно снят", 'success');
+            showToast('Запрет снят', 'success');
         } else {
-            const error = await response.text();
-            showToast(error || "Ошибка снятия бана", 'danger');
+            showToast(await response.text() || 'Ошибка снятия запрета', 'danger');
         }
     }
 
-    function showToast(message, type = 'danger') {
-        const id = 'toast-' + Date.now();
-        const toastHtml = `
-      <div id="${id}" class="toast align-items-center text-white bg-${type} border-0 mb-2" role="alert">
-        <div class="d-flex">
-          <div class="toast-body">${message}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-      </div>
-    `;
-        document.getElementById('toastContainer').insertAdjacentHTML('beforeend', toastHtml);
-        new bootstrap.Toast(document.getElementById(id), {delay: 4000}).show();
-    }
-
     function handleReasonChange() {
-        const select = document.getElementById('banReasonSelect');
+        const select      = document.getElementById('banReasonSelect');
         const customInput = document.getElementById('banReasonCustom');
         if (select.value === 'Иное') {
             customInput.classList.remove('d-none');
@@ -396,23 +1141,302 @@
         }
     }
 
-    fetchDeployments();
-    setInterval(fetchDeployments, 30000);
+    function showToast(message, type = 'danger') {
+        const id = 'toast-' + Date.now();
+        document.getElementById('toastContainer').insertAdjacentHTML('beforeend', `
+            <div id="${id}" class="toast align-items-center text-white bg-${type} border-0 mb-2" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>`);
+        new bootstrap.Toast(document.getElementById(id), { delay: 4000 }).show();
+    }
+
+    function setLoading(btn, loading) {
+        if (!btn) return;
+        if (loading) { btn.disabled = true; btn._html = btn.innerHTML; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
+        else         { btn.disabled = false; btn.innerHTML = btn._html; }
+    }
+
+    /* ── Auth ── */
+    let currentUser        = null;
+    let standNames         = [];
+    let openCommentSections = new Set();
+
+    function authHeaders() {
+        const token = localStorage.getItem('authToken');
+        return token ? {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'} : {'Content-Type': 'application/json'};
+    }
+
+    async function initAuth() {
+        const token = localStorage.getItem('authToken');
+        if (!token) { renderAuthBlock(null); return; }
+        try {
+            const resp = await fetch('/auth/me', {headers: {'Authorization': 'Bearer ' + token}});
+            if (resp.ok) { currentUser = await resp.json(); renderAuthBlock(currentUser); startHeartbeat(); }
+            else { localStorage.removeItem('authToken'); renderAuthBlock(null); }
+        } catch { renderAuthBlock(null); }
+    }
+
+    function renderAuthBlock(user) {
+        const block = document.getElementById('authBlock');
+        if (!user) {
+            block.innerHTML = `<button class="btn btn-outline-secondary btn-sm" onclick="openAuthModal('login')" style="border-radius:8px;"><i class="bi bi-person me-1"></i>Войти</button>`;
+        } else {
+            const initials = user.firstName[0] + user.lastName[0];
+            const adminBadge = user.role === 'ADMIN' ? ' <span class="badge bg-primary ms-1" style="font-size:0.65rem;">ADM</span>' : '';
+            block.innerHTML = `
+                <div class="user-chip">
+                    <div class="user-avatar">${initials}</div>
+                    ${user.firstName} ${user.lastName[0]}.${adminBadge}
+                    ${user.role === 'ADMIN' ? `<button class="btn btn-outline-primary btn-sm ms-2" onclick="openAnnouncementModal()" style="border-radius:8px;font-size:0.75rem;padding:0.2rem 0.55rem;" title="Создать объявление">
+                        <i class="bi bi-megaphone me-1"></i>Объявление
+                    </button>` : ''}
+                    <button class="btn btn-outline-danger btn-sm ms-2" onclick="openBugReportModal()" style="border-radius:8px;font-size:0.75rem;padding:0.2rem 0.55rem;">
+                        <i class="bi bi-bug me-1"></i>Баг
+                    </button>
+                    <button class="btn p-0 ms-1" onclick="doLogout()" title="Выйти" style="color:var(--text-secondary);line-height:1;">
+                        <i class="bi bi-box-arrow-right" style="font-size:0.85rem;"></i>
+                    </button>
+                </div>`;
+        }
+    }
+
+    function openAuthModal(tab) {
+        switchAuthTab(tab);
+        new bootstrap.Modal(document.getElementById('authModal')).show();
+    }
+
+    function switchAuthTab(tab) {
+        document.getElementById('loginForm').style.display   = tab === 'login'    ? '' : 'none';
+        document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
+        document.getElementById('tabLoginBtn').classList.toggle('active', tab === 'login');
+        document.getElementById('tabRegBtn').classList.toggle('active', tab === 'register');
+    }
+
+    async function doLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const errEl    = document.getElementById('loginError');
+        const btn      = document.querySelector('#loginForm .btn-primary');
+        errEl.textContent = '';
+        if (!username || !password) { errEl.textContent = 'Заполните все поля'; return; }
+        setLoading(btn, true);
+        try {
+            const resp = await fetch('/auth/login', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username, password})});
+            if (!resp.ok) { errEl.textContent = await resp.text(); return; }
+            const data = await resp.json();
+            localStorage.setItem('authToken', data.token);
+            currentUser = data.user;
+            renderAuthBlock(currentUser);
+            startHeartbeat();
+            bootstrap.Modal.getInstance(document.getElementById('authModal')).hide();
+            showToast('Добро пожаловать, ' + currentUser.firstName + '!', 'success');
+            reloadComments();
+        } catch { errEl.textContent = 'Ошибка сети'; }
+        finally { setLoading(btn, false); }
+    }
+
+    async function doRegister() {
+        const errEl = document.getElementById('regError');
+        const btn   = document.querySelector('#registerForm .btn-primary');
+        errEl.textContent = '';
+        const body = {
+            username: document.getElementById('regUsername').value.trim(),
+            firstName: document.getElementById('regFirstName').value.trim(),
+            lastName: document.getElementById('regLastName').value.trim(),
+            password: document.getElementById('regPassword').value,
+            requestAdmin: document.getElementById('regRequestAdmin').checked
+        };
+        if (!body.username || !body.firstName || !body.lastName || !body.password) { errEl.textContent = 'Заполните все поля'; return; }
+        setLoading(btn, true);
+        try {
+            const resp = await fetch('/auth/register', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+            if (!resp.ok) { errEl.textContent = await resp.text(); return; }
+            showToast('Регистрация успешна! Войдите в систему.', 'success');
+            switchAuthTab('login');
+        } catch { errEl.textContent = 'Ошибка сети'; }
+        finally { setLoading(btn, false); }
+    }
+
+    async function doLogout() {
+        const token = localStorage.getItem('authToken');
+        if (token) await fetch('/auth/logout', {method: 'POST', headers: {'Authorization': 'Bearer ' + token}}).catch(() => {});
+        localStorage.removeItem('authToken');
+        currentUser = null;
+        renderAuthBlock(null);
+        showToast('Вы вышли из системы', 'success');
+        reloadComments();
+    }
+
+    function startHeartbeat() {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        fetch('/auth/heartbeat', {method: 'POST', headers: {'Authorization': 'Bearer ' + token}}).catch(() => {});
+        setTimeout(startHeartbeat, 2 * 60 * 1000);
+    }
+
+    /* ── Comments ── */
+    function toggleComments(standName) {
+        const body    = document.getElementById('comment-body-' + standName);
+        const chevron = document.getElementById('comment-chevron-' + standName);
+        const isOpen  = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : '';
+        chevron.className  = isOpen ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+        isOpen ? openCommentSections.delete(standName) : openCommentSections.add(standName);
+    }
+
+    async function loadComments(standName, showSpinner = true) {
+        const body = document.getElementById('comment-body-' + standName);
+        if (showSpinner && !body.hasChildNodes()) {
+            body.innerHTML = '<div class="text-muted small py-1"><span class="spinner-border spinner-border-sm me-1"></span>Загрузка...</div>';
+        }
+        try {
+            const comments = await fetch('/comments?stand=' + encodeURIComponent(standName)).then(r => r.json());
+            renderComments(standName, comments);
+        } catch {
+            body.innerHTML = '<div class="text-danger small">Ошибка загрузки</div>';
+        }
+    }
+
+    function renderComments(standName, comments) {
+        const body  = document.getElementById('comment-body-' + standName);
+        const label = document.getElementById('comment-label-' + standName);
+        label.textContent = 'Комментарии' + (comments.length ? ' (' + comments.length + ')' : '');
+
+        let html = '';
+        if (comments.length) {
+            const items = comments.map(c => {
+                const isOwn   = currentUser && c.authorId === currentUser.id;
+                const isAdmin = currentUser && currentUser.role === 'ADMIN';
+                const delBtn  = (isOwn || isAdmin)
+                    ? `<button class="btn p-0 ms-auto flex-shrink-0" style="color:var(--text-secondary);line-height:1;" title="Удалить" onclick="deleteComment('${c.id}','${standName}')"><i class="bi bi-x" style="font-size:0.9rem;"></i></button>`
+                    : '';
+                return `<div class="comment-item">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="comment-author">${c.authorName}</span>
+                        <span class="comment-time">${timeAgo(c.createdAt)}</span>
+                        ${delBtn}
+                    </div>
+                    <div class="mt-1" style="white-space:pre-wrap;word-break:break-word;">${escapeHtml(c.text)}</div>
+                </div>`;
+            }).join('');
+            html = `<div style="max-height:170px;overflow-y:auto;overflow-x:hidden;">${items}</div>`;
+        } else {
+            html = '<div class="text-muted small mb-2">Комментариев пока нет</div>';
+        }
+
+        const formHtml = currentUser
+            ? `<div class="d-flex gap-2 mt-2">
+                   <input type="text" class="form-control form-control-sm" id="comment-input-${standName}"
+                          placeholder="Написать комментарий..." maxlength="500"
+                          onkeydown="if(event.key==='Enter')submitComment('${standName}')">
+                   <button class="btn btn-primary btn-sm flex-shrink-0" onclick="submitComment('${standName}')">
+                       <i class="bi bi-send"></i>
+                   </button>
+               </div>`
+            : `<div class="text-muted small mt-2"><a href="#" onclick="openAuthModal('login');return false;">Войдите</a>, чтобы оставить комментарий</div>`;
+
+        body.innerHTML = html + formHtml;
+    }
+
+    async function submitComment(standName) {
+        const input = document.getElementById('comment-input-' + standName);
+        const btn   = document.querySelector(`#comment-body-${standName} .btn-primary`);
+        const text  = input?.value.trim();
+        if (!text || !currentUser) return;
+        setLoading(btn, true);
+        try {
+            const resp = await fetch('/comments', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({standName, text})
+            });
+            if (resp.ok) { input.value = ''; await loadComments(standName); }
+            else showToast(await resp.text(), 'danger');
+        } catch { showToast('Ошибка сети', 'danger'); }
+        finally { setLoading(btn, false); }
+    }
+
+    async function deleteComment(commentId, standName) {
+        if (!currentUser) return;
+        const resp = await fetch(`/comments/${commentId}?stand=${encodeURIComponent(standName)}`, {
+            method: 'DELETE', headers: authHeaders()
+        });
+        if (resp.ok) await loadComments(standName);
+        else showToast(await resp.text(), 'danger');
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function linkify(str) {
+        return escapeHtml(str).replace(
+            /(https?:\/\/[^\s<>"]+)/g,
+            '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+        );
+    }
+
+    function goToAdmin() {
+        const token = localStorage.getItem('authToken');
+        if (token) document.cookie = 'app-token=' + token + '; path=/; SameSite=Strict';
+        window.location.href = '/admin';
+    }
+
+    function restoreOpenComments() {
+        for (const standName of openCommentSections) {
+            const body    = document.getElementById('comment-body-' + standName);
+            const chevron = document.getElementById('comment-chevron-' + standName);
+            if (body)    body.style.display = '';
+            if (chevron) chevron.className  = 'bi bi-chevron-up';
+        }
+    }
+
+    async function reloadComments(silent = false) {
+        await Promise.all(standNames.map(s => loadComments(s, !silent)));
+        restoreOpenComments();
+    }
+
+    /* ── Bug report ── */
+    function openBugReportModal() {
+        document.getElementById('bugReportTitle').value = '';
+        document.getElementById('bugReportDescription').value = '';
+        document.getElementById('bugReportError').textContent = '';
+        new bootstrap.Modal(document.getElementById('bugReportModal')).show();
+    }
+
+    async function submitBugReport() {
+        const title       = document.getElementById('bugReportTitle').value.trim();
+        const description = document.getElementById('bugReportDescription').value.trim();
+        const errEl       = document.getElementById('bugReportError');
+        const btn         = document.getElementById('bugReportSubmitBtn');
+        errEl.textContent = '';
+        if (!title) { errEl.textContent = 'Краткое описание обязательно'; return; }
+        setLoading(btn, true);
+        try {
+            const resp = await fetch('/bug-reports', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({title, description})
+            });
+            if (resp.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('bugReportModal')).hide();
+                showToast('Баг-репорт отправлен, спасибо!', 'success');
+            } else {
+                errEl.textContent = await resp.text();
+            }
+        } catch { errEl.textContent = 'Ошибка сети'; }
+        finally { setLoading(btn, false); }
+    }
+
+    /* ── Init ── */
+    Promise.all([fetchDeployments(), initAuth()]).then(reloadComments);
+    connectWebSocket();
+
+    setInterval(() => fetchDeployments().then(() => reloadComments(true)), 60000);
+    setInterval(refreshTimeAgo, 30000);
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<footer class="mt-5 text-center text-muted small">
-    <hr>
-    <p>Разработка — Эдуард Ядигаров</p>
-    📧 <a href="mailto:eduard_yadigarov@rgs.ru">Почта</a> |
-    💬 <a href="https://t.me/el_eduardo" target="_blank">Telegram</a>
-    💬 <a href="https://vk.com/id13450731" target="_blank">VK</a>
-    <p>
-        💬 <a href="https://t.me/+U-qA4hKIGVk2ODcy" target="_blank"><strong>Канал с уведомлениями Telegram</strong></a>
-        💬 <a href="https://app.pachca.com/chats/26092493" target="_blank"><strong>Канал с уведомлениями
-        Пачка</strong></a>
-    </p>
-</footer>
 </body>
 </html>

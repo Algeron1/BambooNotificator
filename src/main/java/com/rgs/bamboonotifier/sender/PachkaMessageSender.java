@@ -4,19 +4,22 @@ import com.rgs.bamboonotifier.DTO.DeployResult;
 import com.rgs.bamboonotifier.DTO.PachkaResponse;
 import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
+import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.interfaces.IMessageSender;
 import com.rgs.bamboonotifier.service.NotificationSettingsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
-public class PachkaMessageSender extends AbstractMessageSender {
+public class PachkaMessageSender extends AbstractMessageSender<PachkaResponse> {
 
     private final IMessageSender<PachkaResponse> pachkaService;
     private final NotificationSettingsService notificationSettingsService;
 
     public PachkaMessageSender(IMessageSender<PachkaResponse> pachkaService,
-                               NotificationSettingsService notificationSettingsService) {
+                               NotificationSettingsService notificationSettingsService,
+                               DeployMessageRepository deployMessageRepository) {
+        super(deployMessageRepository);
         this.pachkaService = pachkaService;
         this.notificationSettingsService = notificationSettingsService;
     }
@@ -35,7 +38,9 @@ public class PachkaMessageSender extends AbstractMessageSender {
         }
 
         PachkaResponse pachkaResponse = response.getBody();
-        deployMessage.setPachkaMessageId(String.valueOf(pachkaResponse.getData().getId()));
+        if (pachkaResponse != null && pachkaResponse.getData() != null) {
+            deployMessage.setPachkaMessageId(String.valueOf(pachkaResponse.getData().getId()));
+        }
 
         saveDeployMessage(deployMessage);
     }

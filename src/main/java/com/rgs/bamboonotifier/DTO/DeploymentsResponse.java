@@ -8,6 +8,7 @@ public class DeploymentsResponse {
     private List<DeploymentInfo> deployments;
     private List<DeployBanMessage> deployBanMessages;
     private List<AnnouncementMessageInfo> announcementMessageInfos;
+    private List<QueueItem> queueItems;
 
     public List<DeploymentInfo> getDeployments() {
         return deployments;
@@ -31,5 +32,13 @@ public class DeploymentsResponse {
 
     public void setAnnouncementMessageInfos(List<AnnouncementMessageInfo> announcementMessageInfos) {
         this.announcementMessageInfos = announcementMessageInfos;
+    }
+
+    public List<QueueItem> getQueueItems() {
+        return queueItems;
+    }
+
+    public void setQueueItems(List<QueueItem> queueItems) {
+        this.queueItems = queueItems;
     }
 }

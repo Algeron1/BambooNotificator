@@ -5,8 +5,6 @@ import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
 import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.constants.ApplicationConstants;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,8 +12,11 @@ import java.util.Date;
 
 public abstract class AbstractMessageSender<T> {
 
-    @Autowired
-    protected DeployMessageRepository deployMessageRepository;
+    protected final DeployMessageRepository deployMessageRepository;
+
+    protected AbstractMessageSender(DeployMessageRepository deployMessageRepository) {
+        this.deployMessageRepository = deployMessageRepository;
+    }
 
     public abstract void send(DeployResult deployResult, String standName, String environmentId, DeployMessage deployMessage);
 

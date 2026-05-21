@@ -12,6 +12,34 @@ public class DeploymentInfo {
     private String branchName;
     private String progressStatus;
     private String pinCode;
+    private Long lastUpdated;
+    private String buildState;
+    private int testsPassed;
+    private int testsFailed;
+    private String duration;
+    private String logUrl;
+    private String triggerType;
+
+    public String getLogUrl() { return logUrl; }
+    public void setLogUrl(String logUrl) { this.logUrl = logUrl; }
+
+    public String getTriggerType() { return triggerType; }
+    public void setTriggerType(String triggerType) { this.triggerType = triggerType; }
+
+    public Long getLastUpdated() { return lastUpdated; }
+    public void setLastUpdated(Long lastUpdated) { this.lastUpdated = lastUpdated; }
+
+    public String getBuildState() { return buildState; }
+    public void setBuildState(String buildState) { this.buildState = buildState; }
+
+    public int getTestsPassed() { return testsPassed; }
+    public void setTestsPassed(int testsPassed) { this.testsPassed = testsPassed; }
+
+    public int getTestsFailed() { return testsFailed; }
+    public void setTestsFailed(int testsFailed) { this.testsFailed = testsFailed; }
+
+    public String getDuration() { return duration; }
+    public void setDuration(String duration) { this.duration = duration; }
 
     public String getPinCode() {
         return pinCode;

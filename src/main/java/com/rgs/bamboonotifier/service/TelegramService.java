@@ -21,10 +21,11 @@ public class TelegramService implements IMessageSender<TelegramResponse> {
 
     private static final Logger logger = LoggerFactory.getLogger(TelegramService.class);
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final TelegramProperties telegramProperties;
 
-    public TelegramService(TelegramProperties telegramProperties) {
+    public TelegramService(RestTemplate restTemplate, TelegramProperties telegramProperties) {
+        this.restTemplate = restTemplate;
         this.telegramProperties = telegramProperties;
     }
 

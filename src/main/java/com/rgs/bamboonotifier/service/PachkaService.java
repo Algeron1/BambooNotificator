@@ -20,10 +20,11 @@ public class PachkaService implements IMessageSender<PachkaResponse> {
 
     private static final Logger logger = LoggerFactory.getLogger(PachkaService.class);
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final PachkaProperties pachkaProperties;
 
-    public PachkaService(PachkaProperties pachkaProperties) {
+    public PachkaService(RestTemplate restTemplate, PachkaProperties pachkaProperties) {
+        this.restTemplate = restTemplate;
         this.pachkaProperties = pachkaProperties;
     }
 

@@ -4,19 +4,22 @@ import com.rgs.bamboonotifier.DTO.DeployResult;
 import com.rgs.bamboonotifier.DTO.TelegramResponse;
 import com.rgs.bamboonotifier.Entity.DeployBanMessage;
 import com.rgs.bamboonotifier.Entity.DeployMessage;
+import com.rgs.bamboonotifier.Repository.DeployMessageRepository;
 import com.rgs.bamboonotifier.interfaces.IMessageSender;
 import com.rgs.bamboonotifier.service.NotificationSettingsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TelegramMessageSender extends AbstractMessageSender {
+public class TelegramMessageSender extends AbstractMessageSender<TelegramResponse> {
 
     private final IMessageSender<TelegramResponse> telegramService;
     private final NotificationSettingsService notificationSettingsService;
 
     public TelegramMessageSender(IMessageSender<TelegramResponse> telegramService,
-                                 NotificationSettingsService notificationSettingsService) {
+                                 NotificationSettingsService notificationSettingsService,
+                                 DeployMessageRepository deployMessageRepository) {
+        super(deployMessageRepository);
         this.telegramService = telegramService;
         this.notificationSettingsService = notificationSettingsService;
     }

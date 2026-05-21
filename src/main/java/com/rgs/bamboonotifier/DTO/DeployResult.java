@@ -1,8 +1,11 @@
 package com.rgs.bamboonotifier.DTO;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class DeployResult {
@@ -24,6 +27,12 @@ public class DeployResult {
 
     @JsonProperty("lifeCycleState")
     private String lifeCycleState;
+
+    @JsonProperty("reasonSummary")
+    private String reasonSummary;
+
+    @JsonProperty("logFiles")
+    private List<String> logFiles;
 
     public DeploymentVersion getDeploymentVersion() {
         return deploymentVersion;
@@ -65,14 +74,16 @@ public class DeployResult {
         this.deploymentState = deploymentState;
     }
 
-    public long getId() {
-        return id;
-    }
+    public String getReasonSummary() { return reasonSummary; }
+    public void setReasonSummary(String reasonSummary) { this.reasonSummary = reasonSummary; }
 
-    public void setId(long id) {
-        this.id = id;
-    }
+    public List<String> getLogFiles() { return logFiles; }
+    public void setLogFiles(List<String> logFiles) { this.logFiles = logFiles; }
 
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DeploymentVersion {
 
         @JsonProperty("id")
@@ -86,6 +97,20 @@ public class DeployResult {
 
         @JsonProperty("planBranchName")
         private String planBranchName;
+
+        private String planResultKey;
+
+        @JsonProperty("planResultKey")
+        public void setPlanResultKey(Object value) {
+            if (value instanceof String s) {
+                this.planResultKey = s;
+            } else if (value instanceof Map<?, ?> m) {
+                Object key = m.get("key");
+                if (key instanceof String s) this.planResultKey = s;
+            }
+        }
+
+        public String getPlanResultKey() { return planResultKey; }
 
         public long getId() {
             return id;
